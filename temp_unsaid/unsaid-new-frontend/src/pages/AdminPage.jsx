@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { FaChartBar, FaUsers, FaPepperHot, FaFire } from "react-icons/fa"
 
-import Dashboard from "../components/admin/Dashboard"
 import AdminUsers from "../components/admin/AdminUsers"
 import AdminPosts from "../components/admin/AdminPosts"
 
@@ -39,7 +38,7 @@ const adminPageStyles = `
 `
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const [activeTab, setActiveTab] = useState("users")
 
   return (
     <>
@@ -92,7 +91,7 @@ const AdminPage = () => {
         </nav>
 
         <div className="fade-slide-in">
-          {activeTab === "dashboard" && <Dashboard />}
+          {/* {activeTab === "dashboard" && <Dashboard />} */}
           {activeTab === "users" && <AdminUsers />}
           {activeTab === "posts" && <AdminPosts />}
         </div>

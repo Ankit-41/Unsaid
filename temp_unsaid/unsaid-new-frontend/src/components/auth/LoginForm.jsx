@@ -87,7 +87,7 @@ function LoginForm() {
                   onChange={handleChange}
                   placeholder="Enter your email"
                   required
-                  className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                  className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                 />
               </div>
             </div>
@@ -108,7 +108,7 @@ function LoginForm() {
                   onChange={handleChange}
                   placeholder="Enter your password"
                   required
-                  className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                  className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                 />
               </div>
             </div>

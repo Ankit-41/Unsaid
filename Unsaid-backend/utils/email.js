@@ -2,10 +2,12 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import OTP from '../models/OTP.js';
 
-// Configure nodemailer transporter
+// Configure nodemailer transporter with explicit SMTP settings for Gmail
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp.gmail.com", // Gmail SMTP host
+    port: 465,              // Secure port for Gmail
+    secure: true,           // Use SSL
     auth: {
       user: process.env.EMAIL_USERNAME,
       pass: process.env.EMAIL_PASSWORD
@@ -61,9 +63,12 @@ export const sendOTPEmail = async (email, otp) => {
   
   try {
     await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${email} with OTP: ${otp}`);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
     return false;
   }
 };
+
+export { createTransporter };

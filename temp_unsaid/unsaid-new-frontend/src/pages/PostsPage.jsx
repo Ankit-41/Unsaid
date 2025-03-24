@@ -1,14 +1,17 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+// import { postsAPI } from "../../services/api"
 import { postsAPI } from "../services/api"
+// import Post from "../posts/Post"
 import Post from "../components/posts/Post"
+// import ComposeButton from "../posts/ComposeButton"
 import ComposeButton from "../components/posts/ComposeButton"
-import { FaSpinner, FaChevronUp, FaChevronDown, FaBell, FaUserCircle } from "react-icons/fa"
-import "../styles/posts.css"
+import { FaChevronUp, FaChevronDown, FaPepperHot, FaFire } from "react-icons/fa"
 import toast from "react-hot-toast"
 
-const cssToAdd = `
+// Add this to your global CSS or component
+const postsPageStyles = `
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -41,10 +44,30 @@ const cssToAdd = `
   
   .nav-button:hover:not(:disabled) {
     transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 61, 0, 0.5);
   }
   
   .nav-button:active:not(:disabled) {
     transform: scale(0.95);
+  }
+
+  @keyframes heatPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 61, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }
+  }
+  
+  .heat-pulse {
+    animation: heatPulse 2s infinite;
+  }
+
+  .spicy-bg {
+    // background-color: #1a1a1a;
+    // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+  }
+
+  .spicy-gradient {
+    background: linear-gradient(135deg, #b71c1c, #ff3d00);
   }
 `
 
@@ -68,25 +91,27 @@ function PostsPage() {
 
   const fetchPosts = async () => {
     try {
-      setLoading(true);
-      const response = await postsAPI.getApprovedPosts(page);
+      setLoading(true)
+      const response = await postsAPI.getApprovedPosts(page)
       // Extract posts from data and pagination from the top level
-      const newPosts = response.data.data.posts;
-      const currentPage = response.data.currentPage;
-      const totalPages = response.data.totalPages;
-  
-      setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-      setPage(currentPage + 1);
-      setHasMore(currentPage < totalPages);
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      setError("Failed to load posts. Please try again later.");
-      toast.error("Failed to load posts");
-    } finally {
-      setLoading(false);
-    }
-  };
+      const newPosts = response.data.data.posts
+      const currentPage = response.data.currentPage
+      const totalPages = response.data.totalPages
 
+      setPosts((prevPosts) => [...prevPosts, ...newPosts])
+      setPage(currentPage + 1)
+      setHasMore(currentPage < totalPages)
+    } catch (error) {
+      console.error("Error fetching posts:", error)
+      setError("Failed to load the hot gossip. The tea might be too spicy right now.")
+      toast.error("Failed to load the hot gossip", {
+        icon: "🔥",
+        style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // When user nears the end, automatically fetch more posts if available.
   useEffect(() => {
@@ -169,21 +194,23 @@ function PostsPage() {
       // If at the last post but more posts are available, fetch additional posts first.
       if (currentPostIndex >= posts.length - 1) {
         if (hasMore) {
-          await fetchPosts();
-          setScrollLocked(true);
-          setCurrentPostIndex((prev) => prev + 1);
-          setTimeout(() => setScrollLocked(false), 700);
+          await fetchPosts()
+          setScrollLocked(true)
+          setCurrentPostIndex((prev) => prev + 1)
+          setTimeout(() => setScrollLocked(false), 700)
         } else {
-          toast.error("You have reached the end of posts");
+          toast.error("You've reached the end of the spicy gossip!", {
+            icon: "🌶️",
+            style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
+          })
         }
       } else {
-        setScrollLocked(true);
-        setCurrentPostIndex((prev) => prev + 1);
-        setTimeout(() => setScrollLocked(false), 700);
+        setScrollLocked(true)
+        setCurrentPostIndex((prev) => prev + 1)
+        setTimeout(() => setScrollLocked(false), 700)
       }
     }
-  };
-  
+  }
 
   const getPostClassName = (index) => {
     if (index === currentPostIndex) return "post-container active"
@@ -193,24 +220,28 @@ function PostsPage() {
 
   if (loading && posts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <FaSpinner className="animate-spin text-4xl mb-4 text-indigo-600 dark:text-indigo-400" />
-        <p className="text-gray-700 dark:text-gray-300 font-medium">Loading posts...</p>
+      <div className="flex flex-col items-center justify-center h-screen spicy-bg">
+        <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
+        <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
+        <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
       </div>
     )
   }
 
   if (error && posts.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen p-6 bg-gray-50 dark:bg-gray-900">
-        <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-6 rounded-lg shadow-md max-w-md w-full">
-          <h3 className="text-lg font-semibold mb-2">Error</h3>
-          <p>{error}</p>
+      <div className="flex items-center justify-center h-screen p-6 spicy-bg">
+        <div className="bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md max-w-md w-full">
+          <div className="flex items-center mb-4">
+            <FaFire className="text-red-500 text-2xl mr-3" />
+            <h3 className="text-lg font-semibold">Too Hot to Handle</h3>
+          </div>
+          <p className="mb-4">{error}</p>
           <button
             onClick={fetchPosts}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+            className="w-full px-4 py-2 spicy-gradient text-white rounded-md hover:opacity-90 transition flex items-center justify-center"
           >
-            Try Again
+            <FaPepperHot className="mr-2" /> Try Again
           </button>
         </div>
       </div>
@@ -218,16 +249,12 @@ function PostsPage() {
   }
 
   return (
-    <div className="relative bg-gray-100 dark:bg-gray-900 min-h-screen">
+    <div className="relative spicy-bg min-h-screen">
       {/* Add the CSS */}
-      <style>{cssToAdd}</style>
+      <style>{postsPageStyles}</style>
 
       {/* Posts container */}
-      <div
-        className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900"
-        ref={containerRef}
-        style={{ paddingTop: "60px" }}
-      >
+      <div className="h-screen overflow-hidden spicy-bg" ref={containerRef} style={{ paddingTop: "60px" }}>
         {posts.map((post, index) => (
           <div
             key={post._id}
@@ -251,19 +278,19 @@ function PostsPage() {
           <button
             onClick={navigateToPrev}
             disabled={currentPostIndex === 0 || scrollLocked}
-            className="nav-button p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
+            className="nav-button p-3 bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Previous post"
           >
-            <FaChevronUp className="text-indigo-600 dark:text-indigo-400" />
+            <FaChevronUp className="text-red-500" />
           </button>
           <button
             onClick={navigateToNext}
             // Disable only if scroll is locked or if there are no more posts available
             disabled={scrollLocked || (!hasMore && currentPostIndex >= posts.length - 1)}
-            className="nav-button p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
+            className="nav-button p-3 bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed heat-pulse"
             aria-label="Next post"
           >
-            <FaChevronDown className="text-indigo-600 dark:text-indigo-400" />
+            <FaChevronDown className="text-red-500" />
           </button>
         </div>
       </div>
@@ -275,3 +302,4 @@ function PostsPage() {
 }
 
 export default PostsPage
+

@@ -41,6 +41,7 @@ const registerFormStyles = `
 .spicy-gradient {
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
+
 `
 
 function RegisterForm() {
@@ -180,7 +181,7 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="What should we call you?"
                     required
-                    className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                   />
                 </div>
               </div>
@@ -201,7 +202,7 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="Where to send the hot gossip"
                     required
-                    className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                   />
                 </div>
               </div>
@@ -222,7 +223,7 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="Create a spicy password"
                     required
-                    className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
@@ -246,7 +247,7 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="Confirm your spicy password"
                     required
-                    className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
                   />
                 </div>
               </div>
@@ -254,7 +255,7 @@ function RegisterForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse mt-6"
+                className="w-full flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse mt-6"
               >
                 {loading ? (
                   <>
@@ -307,7 +308,7 @@ function RegisterForm() {
                       onChange={(e) => setOtp(e.target.value)}
                       placeholder="Enter the 6-digit code"
                       required
-                      className="pl-10 w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-center tracking-widest"
+                      className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-center tracking-widest"
                       maxLength={6}
                     />
                   </div>
@@ -316,7 +317,7 @@ function RegisterForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse"
+                  className="w-full flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse"
                 >
                   {loading ? (
                     <>

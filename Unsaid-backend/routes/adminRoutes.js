@@ -1,7 +1,8 @@
+// adminRoutes.js
 import express from 'express';
 import {
   getAllUsers,
-  getDashboardStats,
+  getDashboardStats,  // ensure this is imported
   makeAdmin,
   removeAdmin,
   getPostStats

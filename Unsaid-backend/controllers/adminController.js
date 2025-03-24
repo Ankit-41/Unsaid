@@ -24,31 +24,20 @@ export const getAllUsers = async (req, res) => {
 // Get dashboard stats (admin only)
 export const getDashboardStats = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalPosts = await Post.countDocuments();
+    const totalPosts = await Post.countDocuments({});
     const pendingPosts = await Post.countDocuments({ status: 'pending' });
     const approvedPosts = await Post.countDocuments({ status: 'approved' });
     const disapprovedPosts = await Post.countDocuments({ status: 'disapproved' });
     const removedPosts = await Post.countDocuments({ status: 'removed' });
     
-    // Get recent posts
-    const recentPosts = await Post.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .populate('author', 'name email');
-    
     res.status(200).json({
       status: 'success',
       data: {
-        stats: {
-          totalUsers,
-          totalPosts,
-          pendingPosts,
-          approvedPosts,
-          disapprovedPosts,
-          removedPosts
-        },
-        recentPosts
+        totalPosts,
+        pendingPosts,
+        approvedPosts,
+        disapprovedPosts,
+        removedPosts
       }
     });
   } catch (error) {

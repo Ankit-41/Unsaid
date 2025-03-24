@@ -1,5 +1,45 @@
 import Post from '../models/Post.js';
 
+
+
+// In postController.js
+
+// Search posts by query (admin only)
+export const searchPosts = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim() === '') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Query parameter is required'
+      });
+    }
+    
+    // Search in post content (you can extend the query to other fields as needed)
+    const posts = await Post.find({
+      content: { $regex: q, $options: 'i' },
+      status: 'approved' // or remove this filter if you want to search across all statuses
+    })
+      .sort({ createdAt: -1 })
+      .populate('author', 'name')
+      .populate('comments.user', 'name');
+    
+    res.status(200).json({
+      status: 'success',
+      results: posts.length,
+      data: {
+        posts
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+
 // Create a new post
 export const createPost = async (req, res) => {
   try {
@@ -18,6 +58,37 @@ export const createPost = async (req, res) => {
       data: {
         post
       }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+
+export const getAllPosts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const posts = await Post.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('author', 'name')
+      .populate('comments.user', 'name');
+
+    const total = await Post.countDocuments({});
+
+    res.status(200).json({
+      status: 'success',
+      results: posts.length,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      data: { posts }
     });
   } catch (error) {
     res.status(500).json({

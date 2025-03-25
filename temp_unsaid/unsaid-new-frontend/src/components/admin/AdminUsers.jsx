@@ -41,9 +41,9 @@ const adminUserStyles = `
 }
 
 .admin-container {
-  max-width: 95%;
+  // max-width: 100%;
   margin: 0 auto;
-  padding: 0.75rem;
+  // padding: 0.75rem;
 }
 
 .user-card {

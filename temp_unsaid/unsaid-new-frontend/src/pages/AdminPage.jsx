@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { FaChartBar, FaUsers, FaPepperHot, FaFire } from "react-icons/fa"
+import Footer from "../components/layout/Footer"
 
 import AdminUsers from "../components/admin/AdminUsers"
 import AdminPosts from "../components/admin/AdminPosts"
@@ -43,8 +44,8 @@ const AdminPage = () => {
   return (
     <>
       <style>{adminPageStyles}</style>
-      <div className="min-h-screen spicy-bg p-4">
-        <header className="mb-6 text-center">
+      <div className="min-h-screen spicy-bg p-2 flex flex-col">
+        <header className="mb-6 mt-3  text-center">
           <div className="inline-flex items-center justify-center mb-2">
             <FaFire className="text-red-500 text-4xl mr-3 heat-pulse" />
             <h1 className="text-3xl  font-bold text-white bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">
@@ -90,15 +91,15 @@ const AdminPage = () => {
           </button>
         </nav>
 
-        <div className="fade-slide-in">
+        <div className="fade-slide-in flex-grow">
           {/* {activeTab === "dashboard" && <Dashboard />} */}
           {activeTab === "users" && <AdminUsers />}
           {activeTab === "posts" && <AdminPosts />}
         </div>
+        <Footer />
       </div>
     </>
   )
 }
 
 export default AdminPage
-

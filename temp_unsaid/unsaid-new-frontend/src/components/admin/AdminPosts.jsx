@@ -41,9 +41,9 @@ const adminStyles = `
 }
 
 .admin-container {
-  max-width: 95%;
+  // max-width: 95%;
   margin: 0 auto;
-  padding: 0.75rem;
+
 }
 
 .post-card {
@@ -282,7 +282,7 @@ const AdminPosts = () => {
   return (
     <>
       <style>{adminStyles}</style>
-      <div className="admin-container">
+      <div className=" admin-container">
         <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-800">
           <div className="p-3 border-b border-gray-800 spicy-gradient">
             <h2 className="text-xl font-bold text-white flex items-center">

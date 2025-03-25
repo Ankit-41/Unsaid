@@ -250,11 +250,15 @@ function Post({ post, isActive }) {
   const openComments = () => {
     if (isActive) {
       setShowCommentModal(true)
+      // Dispatch custom event to indicate comments modal is open
+      document.dispatchEvent(new CustomEvent('commentsModalStateChange', { detail: { isOpen: true } }));
     }
   }
 
   const closeComments = () => {
     setShowCommentModal(false)
+    // Dispatch custom event to indicate comments modal is closed
+    document.dispatchEvent(new CustomEvent('commentsModalStateChange', { detail: { isOpen: false } }));
   }
 
   const handleCommentSubmit = async (e) => {
@@ -282,7 +286,7 @@ function Post({ post, isActive }) {
   return (
     <>
       <style>{postStyles}</style>
-      <div className="max-h-[calc(100vh-150px)] post-card bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="max-h-[calc(100vh-160px)] post-card bg-gradient-to-b from-gray-900 to-gray-800">
         {/* Header */}
         <div className="p-3 border-b border-gray-800 bg-gray-900 bg-opacity-80">
           <div className="flex items-center">

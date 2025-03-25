@@ -70,7 +70,7 @@ const postsPageStyles = `
   .posts-wrapper {
     max-width: 500px;
     margin: 0 auto;
-    height: 100%;
+    height: calc(100vh - 140px);
     position: relative;
     overflow: hidden;
   }
@@ -470,13 +470,13 @@ function PostsPage() {
   }
 
   return (
-    <div className=" relative bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 min-h-screen">
+    <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
       {/* Add the CSS */}
       <style>{postsPageStyles}</style>
 
       {/* Posts container */}
       <div
-        className="h-screen overflow-hidden"
+        className="overflow-hidden"
         ref={containerRef}
         style={{ paddingTop: "60px" }}
         onTouchStart={handleTouchStart}
@@ -524,4 +524,3 @@ function PostsPage() {
 }
 
 export default PostsPage
-

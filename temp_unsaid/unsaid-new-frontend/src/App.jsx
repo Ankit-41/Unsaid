@@ -5,6 +5,7 @@ import RegisterPage from './pages/RegisterPage';
 import PostsPage from './pages/PostsPage';
 import AdminDashboard from './pages/AdminPage';
 import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './App.css';
@@ -12,16 +13,26 @@ import './App.css';
 // Main Layout with Navbar
 function MainLayout() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <Outlet />
-    </>
+      <div className="flex-grow flex flex-col">
+        <Outlet />
+      </div>
+      <Footer />
+    </div>
   );
 }
 
 // Auth Layout without Navbar
 function AuthLayout() {
-  return <Outlet />;
+  return (
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow">
+        <Outlet />
+      </div>
+      <Footer />
+    </div>
+  );
 }
 
 function App() {

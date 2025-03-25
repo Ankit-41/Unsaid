@@ -110,12 +110,14 @@ function Navbar() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <a
-              className="text-white text-xl font-bold tracking-tight hover:text-red-100 transition-colors flex items-center"
               href="/posts"
+              className="text-white text-xl font-bold tracking-tight hover:text-red-100 transition-colors flex items-center"
+              style={{ textDecoration: 'none' }}
             >
               <FaFire className="mr-1 text-yellow-400 flame-flicker" />
               <span>Unsaid</span>
             </a>
+
 
             {/* Right side controls */}
             <div className="flex items-center space-x-3">

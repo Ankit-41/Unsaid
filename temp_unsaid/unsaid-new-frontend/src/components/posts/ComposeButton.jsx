@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FaPepperHot } from "react-icons/fa"
 import PostModal from "./PostModal"
 
@@ -30,6 +30,22 @@ const composeButtonStyles = `
 
 const ComposeButton = () => {
   const [showModal, setShowModal] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+
+  // Listen for comment modal state changes
+  useEffect(() => {
+    const handleCommentsModalChange = (event) => {
+      setIsCommentsOpen(event.detail.isOpen);
+    };
+
+    // Add event listener
+    document.addEventListener('commentsModalStateChange', handleCommentsModalChange);
+
+    // Clean up the event listener when component unmounts
+    return () => {
+      document.removeEventListener('commentsModalStateChange', handleCommentsModalChange);
+    };
+  }, []);
 
   const handleOpenModal = () => {
     setShowModal(true)
@@ -37,6 +53,11 @@ const ComposeButton = () => {
 
   const handleCloseModal = () => {
     setShowModal(false)
+  }
+
+  // If comments are open, don't show the compose button
+  if (isCommentsOpen) {
+    return null;
   }
 
   return (
@@ -64,4 +85,3 @@ const ComposeButton = () => {
 }
 
 export default ComposeButton
-

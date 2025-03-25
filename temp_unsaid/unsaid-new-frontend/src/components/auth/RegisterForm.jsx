@@ -16,7 +16,7 @@ import {
   FaPepperHot,
 } from "react-icons/fa"
 
-// Add this to your global CSS or component
+// Updated global styles for the registration form
 const registerFormStyles = `
 @keyframes heatPulse {
   0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
@@ -42,6 +42,152 @@ const registerFormStyles = `
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
 
+.register-form {
+  max-width: 400px;
+  width: 100%;
+  margin: 2rem auto;
+  background-color: #1f2937;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header-section {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.header-section h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.header-section p {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #fca5a5;
+}
+
+.form-section {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #d1d5db;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ef4444;
+  font-size: 1rem;
+}
+
+.form-input {
+  background-color: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+  color: #fff;
+  width: 100%;
+  font-size: 0.95rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #b71c1c;
+  box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.25);
+}
+
+.form-input::placeholder {
+  color: rgba(156, 163, 175, 0.7);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, opacity 0.2s;
+  margin-top: 1rem;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submit-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.submit-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.otp-input {
+  letter-spacing: 0.25em;
+  text-align: center;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #f87171;
+  transition: color 0.2s;
+  margin-bottom: 1rem;
+}
+
+.back-button:hover {
+  color: #ef4444;
+}
+
+.verification-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem auto;
+}
+
+.footer-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.footer-text a {
+  font-weight: 500;
+  color: #ef4444;
+  transition: color 0.2s;
+}
+
+.footer-text a:hover {
+  color: #f87171;
+}
 `
 
 function RegisterForm() {
@@ -58,7 +204,7 @@ function RegisterForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e) => {
@@ -144,9 +290,9 @@ function RegisterForm() {
   return (
     <>
       <style>{registerFormStyles}</style>
-      <div className="bg-gray-900 rounded-xl shadow-xl overflow-hidden w-full mx-auto transform transition-all hover:shadow-2xl border border-gray-800">
-        <div className="spicy-gradient p-6">
-          <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center">
+      <div className="register-form">
+        <div className="spicy-gradient header-section">
+          <h2 className="text-white flex items-center justify-center">
             {showOtpForm ? (
               <>
                 <FaKey className="mr-2" /> Verify Your Identity
@@ -157,22 +303,22 @@ function RegisterForm() {
               </>
             )}
           </h2>
-          <p className="text-red-100 text-center mt-2">
-            {showOtpForm ? "One step away from the juiciest gossip" : "Create your anonymous gossip profile"}
+          <p className="text-red-100">
+            {showOtpForm
+              ? "One step away from the juiciest gossip"
+              : "Create your anonymous gossip profile"}
           </p>
         </div>
 
-        <div className="p-6 sm:p-8 bg-gray-900">
+        <div className="form-section">
           {!showOtpForm ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="name" className="form-label">
                   Display Name
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="text-red-500" />
-                  </div>
+                <div className="input-wrapper">
+                  <FaUser className="form-icon" />
                   <input
                     type="text"
                     id="name"
@@ -181,19 +327,17 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="What should we call you?"
                     required
-                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="form-input"
                   />
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+              <div className="form-group">
+                <label htmlFor="email" className="form-label">
                   Email Address
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaEnvelope className="text-red-500" />
-                  </div>
+                <div className="input-wrapper">
+                  <FaEnvelope className="form-icon" />
                   <input
                     type="email"
                     id="email"
@@ -202,19 +346,17 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="Where to send the hot gossip"
                     required
-                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="form-input"
                   />
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+              <div className="form-group">
+                <label htmlFor="password" className="form-label">
                   Password
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="text-red-500" />
-                  </div>
+                <div className="input-wrapper">
+                  <FaLock className="form-icon" />
                   <input
                     type="password"
                     id="password"
@@ -223,7 +365,7 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="Create a spicy password"
                     required
-                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="form-input"
                   />
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
@@ -231,14 +373,12 @@ function RegisterForm() {
                 </p>
               </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+              <div className="form-group">
+                <label htmlFor="confirmPassword" className="form-label">
                   Confirm Password
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="text-red-500" />
-                  </div>
+                <div className="input-wrapper">
+                  <FaLock className="form-icon" />
                   <input
                     type="password"
                     id="confirmPassword"
@@ -247,7 +387,7 @@ function RegisterForm() {
                     onChange={handleChange}
                     placeholder="Confirm your spicy password"
                     required
-                    className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    className="form-input"
                   />
                 </div>
               </div>
@@ -255,7 +395,7 @@ function RegisterForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse mt-6"
+                className="submit-button spicy-gradient text-white heat-pulse"
               >
                 {loading ? (
                   <>
@@ -271,36 +411,29 @@ function RegisterForm() {
               </button>
             </form>
           ) : (
-            <div className="space-y-6 spicy-entrance">
-              <button
-                onClick={goBackToRegister}
-                className="flex items-center text-sm text-red-400 hover:text-red-300 transition-colors"
-              >
+            <div className="spicy-entrance">
+              <button onClick={goBackToRegister} className="back-button">
                 <FaArrowLeft className="mr-1" />
                 Back to registration
               </button>
 
-              <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full spicy-gradient flex items-center justify-center">
-                  <FaFire className="text-white text-xl" />
-                </div>
+              <div className="verification-icon spicy-gradient">
+                <FaFire className="text-white text-xl" />
               </div>
 
-              <p className="text-center text-gray-300">
+              <p className="text-center text-gray-300 text-sm">
                 We've sent a verification code to
                 <br />
                 <span className="font-medium text-red-400">{formData.email}</span>
               </p>
 
-              <form onSubmit={handleOtpSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-gray-300 mb-1">
+              <form onSubmit={handleOtpSubmit}>
+                <div className="form-group">
+                  <label htmlFor="otp" className="form-label">
                     Verification Code
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaKey className="text-red-500" />
-                    </div>
+                  <div className="input-wrapper">
+                    <FaKey className="form-icon" />
                     <input
                       type="text"
                       id="otp"
@@ -308,17 +441,13 @@ function RegisterForm() {
                       onChange={(e) => setOtp(e.target.value)}
                       placeholder="Enter the 6-digit code"
                       required
-                      className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-center tracking-widest"
+                      className="form-input otp-input"
                       maxLength={6}
                     />
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse"
-                >
+                <button type="submit" disabled={loading} className="submit-button spicy-gradient text-white heat-pulse">
                   {loading ? (
                     <>
                       <FaSpinner className="animate-spin mr-2" />
@@ -330,11 +459,11 @@ function RegisterForm() {
                 </button>
               </form>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-400 mb-2">Didn't receive the code?</p>
+              <div className="text-center mt-4">
+                <p className="text-xs text-gray-400 mb-1">Didn't receive the code?</p>
                 <button
                   onClick={handleResendOtp}
-                  className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+                  className="text-xs font-medium text-red-400 hover:text-red-300 transition-colors"
                 >
                   Resend Hot Code
                 </button>
@@ -342,10 +471,10 @@ function RegisterForm() {
             </div>
           )}
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
+          <div className="footer-text">
+            <p>
               Already have an account?{" "}
-              <a href="/login" className="font-medium text-red-400 hover:text-red-300 transition-colors">
+              <a href="/login">
                 Bring the heat
               </a>
             </p>
@@ -357,4 +486,3 @@ function RegisterForm() {
 }
 
 export default RegisterForm
-

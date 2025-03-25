@@ -1,13 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-// import { postsAPI } from "../../services/api"
 import { postsAPI } from "../services/api"
-// import Post from "../posts/Post"
 import Post from "../components/posts/Post"
-// import ComposeButton from "../posts/ComposeButton"
 import ComposeButton from "../components/posts/ComposeButton"
-import { FaChevronUp, FaChevronDown, FaPepperHot, FaFire } from "react-icons/fa"
+import { FaChevronLeft, FaChevronRight, FaPepperHot, FaFire } from "react-icons/fa"
 import toast from "react-hot-toast"
 
 // Add this to your global CSS or component
@@ -22,7 +19,7 @@ const postsPageStyles = `
   }
   
   .post-container {
-    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease, rotate 0.6s ease;
     will-change: transform;
   }
   
@@ -40,6 +37,15 @@ const postsPageStyles = `
   
   .nav-button {
     transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 61, 0, 0.2);
   }
   
   .nav-button:hover:not(:disabled) {
@@ -61,13 +67,91 @@ const postsPageStyles = `
     animation: heatPulse 2s infinite;
   }
 
-  .spicy-bg {
-    // background-color: #1a1a1a;
-    // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+  .posts-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
   }
 
-  .spicy-gradient {
-    background: linear-gradient(135deg, #b71c1c, #ff3d00);
+  .swipe-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    z-index: 20;
+  }
+
+  .swipe-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .swipe-dot.active {
+    background-color: rgba(255, 61, 0, 0.8);
+    transform: scale(1.2);
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+  }
+
+  .loading-pepper {
+    animation: bounce 1.5s infinite alternate;
+  }
+
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-15px); }
+  }
+
+  .error-container {
+    max-width: 90%;
+    width: 350px;
+  }
+
+  /* Skeleton loading styles */
+  .skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 0.5rem;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 61, 0, 0.5);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 61, 0, 0.7);
   }
 `
 
@@ -79,9 +163,13 @@ function PostsPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [scrollLocked, setScrollLocked] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(0)
+  const [touchEndX, setTouchEndX] = useState(0)
+  const [swiping, setSwiping] = useState(false)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [swipeDirection, setSwipeDirection] = useState(null) // 'left' or 'right'
 
   const containerRef = useRef(null)
-  const touchStartY = useRef(0)
   const lastScrollTime = useRef(0)
 
   // Fetch posts on mount
@@ -123,9 +211,9 @@ function PostsPage() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (scrollLocked) return
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      if (e.key === "ArrowLeft") {
         navigateToPrev()
-      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      } else if (e.key === "ArrowRight") {
         navigateToNext()
       }
     }
@@ -133,31 +221,7 @@ function PostsPage() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [currentPostIndex, posts.length, scrollLocked])
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const handleTouchStart = (e) => {
-      touchStartY.current = e.touches[0].clientY
-    }
-    const handleTouchMove = (e) => {
-      if (scrollLocked) return
-      const touchY = e.touches[0].clientY
-      const diff = touchStartY.current - touchY
-      const now = Date.now()
-      if (Math.abs(diff) > 70 && now - lastScrollTime.current > 700) {
-        diff > 0 ? navigateToNext() : navigateToPrev()
-        lastScrollTime.current = now
-      }
-    }
-    container.addEventListener("touchstart", handleTouchStart)
-    container.addEventListener("touchmove", handleTouchMove)
-    return () => {
-      container.removeEventListener("touchstart", handleTouchStart)
-      container.removeEventListener("touchmove", handleTouchMove)
-    }
-  }, [currentPostIndex, posts.length, scrollLocked])
-
+  // Mouse wheel horizontal scrolling
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -166,10 +230,12 @@ function PostsPage() {
       if (scrollLocked) return
       const now = Date.now()
       if (now - lastScrollTime.current > 700) {
-        if (e.deltaY > 70) {
+        if (e.deltaX > 70) {
+          setSwipeDirection("left")
           navigateToNext()
           lastScrollTime.current = now
-        } else if (e.deltaY < -70) {
+        } else if (e.deltaX < -70) {
+          setSwipeDirection("right")
           navigateToPrev()
           lastScrollTime.current = now
         }
@@ -181,11 +247,59 @@ function PostsPage() {
     }
   }, [currentPostIndex, posts.length, scrollLocked])
 
+  // Touch handlers for horizontal swiping
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX)
+    setSwiping(true)
+    setSwipeOffset(0)
+  }
+
+  const handleTouchMove = (e) => {
+    if (!swiping) return
+    const currentX = e.touches[0].clientX
+    const diff = touchStartX - currentX
+    // Determine swipe direction
+    if (diff > 0) {
+      setSwipeDirection("left")
+    } else {
+      setSwipeDirection("right")
+    }
+    // Limit the swipe distance
+    const maxSwipe = window.innerWidth * 0.4
+    const limitedDiff = Math.max(Math.min(diff, maxSwipe), -maxSwipe)
+    setSwipeOffset(limitedDiff)
+  }
+
+  const handleTouchEnd = (e) => {
+    setSwiping(false)
+    setSwipeOffset(0)
+
+    if (scrollLocked) return
+
+    const endX = e.changedTouches[0].clientX
+    setTouchEndX(endX)
+
+    const diff = touchStartX - endX
+    const minSwipeDistance = 50 // Minimum distance to trigger a swipe
+
+    if (diff > minSwipeDistance) {
+      // Swiped left, go to next post
+      navigateToNext()
+    } else if (diff < -minSwipeDistance) {
+      // Swiped right, go to previous post
+      navigateToPrev()
+    }
+  }
+
   const navigateToPrev = () => {
     if (currentPostIndex > 0 && !scrollLocked) {
       setScrollLocked(true)
+      setSwipeDirection("right")
       setCurrentPostIndex((prev) => prev - 1)
-      setTimeout(() => setScrollLocked(false), 700)
+      setTimeout(() => {
+        setScrollLocked(false)
+        setSwipeDirection(null)
+      }, 700)
     }
   }
 
@@ -196,8 +310,12 @@ function PostsPage() {
         if (hasMore) {
           await fetchPosts()
           setScrollLocked(true)
+          setSwipeDirection("left")
           setCurrentPostIndex((prev) => prev + 1)
-          setTimeout(() => setScrollLocked(false), 700)
+          setTimeout(() => {
+            setScrollLocked(false)
+            setSwipeDirection(null)
+          }, 700)
         } else {
           toast.error("You've reached the end of the spicy gossip!", {
             icon: "🌶️",
@@ -206,8 +324,12 @@ function PostsPage() {
         }
       } else {
         setScrollLocked(true)
+        setSwipeDirection("left")
         setCurrentPostIndex((prev) => prev + 1)
-        setTimeout(() => setScrollLocked(false), 700)
+        setTimeout(() => {
+          setScrollLocked(false)
+          setSwipeDirection(null)
+        }, 700)
       }
     }
   }
@@ -218,20 +340,119 @@ function PostsPage() {
     return "post-container next"
   }
 
+  // Modified getPostStyle to correctly animate the outgoing and incoming cards
+  const getPostStyle = (index) => {
+    const baseStyle = {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      visibility: Math.abs(index - currentPostIndex) > 1 ? "hidden" : "visible",
+    }
+
+    // Default horizontal positioning
+    let transform = `translateX(${(index - currentPostIndex) * 100}%)`
+    let opacity = 1
+
+    // Adjust animation based on swipe direction (when not actively dragging)
+    if (swipeDirection && !swiping) {
+      if (swipeDirection === "left") {
+        // After a left swipe, currentPostIndex is incremented.
+        // The outgoing (old) card is at currentPostIndex - 1.
+        if (index === currentPostIndex - 1) {
+          transform = `translateX(-100%) rotate(-5deg)`
+          opacity = 0
+        } else if (index === currentPostIndex) {
+          transform = `translateX(0%) rotate(0deg)`
+          opacity = 1
+        }
+      } else if (swipeDirection === "right") {
+        // After a right swipe, currentPostIndex is decremented.
+        // The outgoing (old) card is at currentPostIndex + 1.
+        if (index === currentPostIndex + 1) {
+          transform = `translateX(100%) rotate(5deg)`
+          opacity = 0
+        } else if (index === currentPostIndex) {
+          transform = `translateX(0%) rotate(0deg)`
+          opacity = 1
+        }
+      }
+    }
+
+    // When actively swiping, update transform based on swipe offset.
+    if (swiping) {
+      if (index === currentPostIndex) {
+        transform = `translateX(${-swipeOffset}px) rotate(${-swipeOffset * 0.02}deg)`
+      } else if (index === currentPostIndex + 1) {
+        transform = `translateX(calc(100% - ${swipeOffset}px)) rotate(${(100 - swipeOffset) * 0.02}deg)`
+      } else if (index === currentPostIndex - 1) {
+        transform = `translateX(calc(-100% - ${swipeOffset}px)) rotate(${(-100 - swipeOffset) * 0.02}deg)`
+      }
+    }
+
+    return {
+      ...baseStyle,
+      transform,
+      opacity,
+      transition: "transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease, rotate 0.6s ease",
+    }
+  }
+
+  // Skeleton loading component
+  const SkeletonPost = () => (
+    <div className="post-card bg-gray-900 h-full flex flex-col">
+      <div className="p-3 border-b border-gray-800 bg-gray-900">
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full skeleton mr-3"></div>
+          <div className="flex-1">
+            <div className="h-4 skeleton w-24 mb-2"></div>
+            <div className="h-3 skeleton w-32"></div>
+          </div>
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="w-3 h-3 rounded-full skeleton mx-0.5"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="flex-grow flex items-center justify-center bg-gray-800 p-4">
+        <div className="w-full">
+          <div className="h-6 skeleton w-full mb-4"></div>
+          <div className="h-6 skeleton w-3/4 mb-4"></div>
+          <div className="h-6 skeleton w-5/6"></div>
+        </div>
+      </div>
+      <div className="p-3 bg-gray-900 flex justify-around">
+        <div className="h-8 w-16 skeleton rounded-full"></div>
+        <div className="h-8 w-16 skeleton rounded-full"></div>
+        <div className="h-8 w-16 skeleton rounded-full"></div>
+      </div>
+    </div>
+  )
+
   if (loading && posts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen spicy-bg">
-        <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
-        <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
-        <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
+      <div className="relative bg-gray-900 min-h-screen">
+        <style>{postsPageStyles}</style>
+        <div className="h-screen overflow-hidden bg-gray-900" style={{ paddingTop: "60px" }}>
+          <div className="posts-wrapper">
+            <SkeletonPost />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-70 backdrop-blur-sm">
+              <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
+              <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
+              <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error && posts.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen p-6 spicy-bg">
-        <div className="bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md max-w-md w-full">
+      <div className="flex items-center justify-center h-screen p-6 bg-gray-900">
+        <div className="error-container bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md">
           <div className="flex items-center mb-4">
             <FaFire className="text-red-500 text-2xl mr-3" />
             <h3 className="text-lg font-semibold">Too Hot to Handle</h3>
@@ -239,7 +460,7 @@ function PostsPage() {
           <p className="mb-4">{error}</p>
           <button
             onClick={fetchPosts}
-            className="w-full px-4 py-2 spicy-gradient text-white rounded-md hover:opacity-90 transition flex items-center justify-center"
+            className="w-full px-4 py-2 bg-gradient-to-r from-red-700 to-red-500 text-white rounded-md hover:opacity-90 transition flex items-center justify-center"
           >
             <FaPepperHot className="mr-2" /> Try Again
           </button>
@@ -249,49 +470,50 @@ function PostsPage() {
   }
 
   return (
-    <div className="relative spicy-bg min-h-screen">
+    <div className=" relative bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 min-h-screen">
       {/* Add the CSS */}
       <style>{postsPageStyles}</style>
 
       {/* Posts container */}
-      <div className="h-screen overflow-hidden spicy-bg" ref={containerRef} style={{ paddingTop: "60px" }}>
-        {posts.map((post, index) => (
-          <div
-            key={post._id}
-            className={getPostClassName(index)}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              transform: `translateY(${(index - currentPostIndex) * 100}%)`,
-              visibility: Math.abs(index - currentPostIndex) > 1 ? "hidden" : "visible",
-            }}
-          >
-            <Post post={post} isActive={index === currentPostIndex} />
-          </div>
-        ))}
+      <div
+        className="h-screen overflow-hidden"
+        ref={containerRef}
+        style={{ paddingTop: "60px" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="posts-wrapper">
+          {posts.map((post, index) => (
+            <div key={post._id} className={getPostClassName(index)} style={getPostStyle(index)}>
+              <Post post={post} isActive={index === currentPostIndex} />
+            </div>
+          ))}
 
-        {/* Navigation Controls */}
-        <div className="fixed right-5 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3 z-30">
-          <button
-            onClick={navigateToPrev}
-            disabled={currentPostIndex === 0 || scrollLocked}
-            className="nav-button p-3 bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Previous post"
-          >
-            <FaChevronUp className="text-red-500" />
-          </button>
-          <button
-            onClick={navigateToNext}
-            // Disable only if scroll is locked or if there are no more posts available
-            disabled={scrollLocked || (!hasMore && currentPostIndex >= posts.length - 1)}
-            className="nav-button p-3 bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed heat-pulse"
-            aria-label="Next post"
-          >
-            <FaChevronDown className="text-red-500" />
-          </button>
+          {/* Navigation Controls */}
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
+            <button
+              onClick={navigateToPrev}
+              disabled={currentPostIndex === 0 || scrollLocked}
+              className="nav-button disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Previous post"
+            >
+              <FaChevronLeft className="text-red-500" />
+            </button>
+          </div>
+
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30">
+            <button
+              onClick={navigateToNext}
+              disabled={scrollLocked || (!hasMore && currentPostIndex >= posts.length - 1)}
+              className="nav-button disabled:opacity-40 disabled:cursor-not-allowed heat-pulse"
+              aria-label="Next post"
+            >
+              <FaChevronRight className="text-red-500" />
+            </button>
+          </div>
+
+          
         </div>
       </div>
 

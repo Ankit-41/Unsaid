@@ -6,7 +6,7 @@ import { authAPI } from "../../services/api"
 import toast from "react-hot-toast"
 import { FaEnvelope, FaLock, FaSignInAlt, FaSpinner, FaFire } from "react-icons/fa"
 
-// Add this to your global CSS or component
+// Updated global styles for the login form
 const loginFormStyles = `
 @keyframes heatPulse {
   0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
@@ -21,6 +21,123 @@ const loginFormStyles = `
 .spicy-gradient {
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
+
+.login-form {
+  max-width: 400px;
+  width: 100%;
+  margin: 2rem auto;
+  background-color: #1f2937;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header-section {
+  padding: 1.5rem;
+}
+
+.header-section h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.header-section p {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-section {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #d1d5db;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.form-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ef4444;
+  font-size: 1rem;
+}
+
+.form-input {
+  background-color: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+  color: #fff;
+  width: 100%;
+  font-size: 0.95rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #b71c1c;
+  box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.25);
+}
+
+.form-input::placeholder {
+  color: rgba(156, 163, 175, 0.7);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, opacity 0.2s;
+  margin-top: 1rem;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submit-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.submit-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.footer-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.footer-text a {
+  font-weight: 500;
+  color: #ef4444;
+  transition: color 0.2s;
+}
+
+.footer-text a:hover {
+  color: #f87171;
+}
 `
 
 function LoginForm() {
@@ -33,13 +150,12 @@ function LoginForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-
     try {
       await authAPI.login(formData)
       toast.success("Welcome to the hot gossip network!", {
@@ -61,24 +177,22 @@ function LoginForm() {
   return (
     <>
       <style>{loginFormStyles}</style>
-      <div className="bg-gray-900 rounded-xl shadow-xl overflow-hidden w-full mx-auto transform transition-all hover:shadow-2xl border border-gray-800">
-        <div className="spicy-gradient p-6">
-          <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center">
+      <div className="login-form">
+        <div className="spicy-gradient header-section text-center">
+          <h2 className="text-white flex items-center justify-center">
             <FaFire className="mr-2" /> Light Your Fire
           </h2>
-          <p className="text-red-100 text-center mt-2">Sign in to spill and sip the tea</p>
+          <p className="text-red-100">Sign in to spill and sip the tea</p>
         </div>
 
-        <div className="p-6 sm:p-8 bg-gray-900">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+        <div className="form-section">
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email" className="form-label">
                 Email Address
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaEnvelope className="text-red-500" />
-                </div>
+              <div className="input-wrapper">
+                <FaEnvelope className="form-icon" />
                 <input
                   type="email"
                   id="email"
@@ -87,19 +201,17 @@ function LoginForm() {
                   onChange={handleChange}
                   placeholder="Enter your email"
                   required
-                  className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                  className="form-input"
                 />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaLock className="text-red-500" />
-                </div>
+              <div className="input-wrapper">
+                <FaLock className="form-icon" />
                 <input
                   type="password"
                   id="password"
@@ -108,32 +220,15 @@ function LoginForm() {
                   onChange={handleChange}
                   placeholder="Enter your password"
                   required
-                  className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                  className="form-input"
                 />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-700 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
-                  Remember me
-                </label>
-              </div>
-              <a href="#" className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors">
-                Forgot password?
-              </a>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse"
+              className="submit-button spicy-gradient text-white heat-pulse"
             >
               {loading ? (
                 <>
@@ -149,10 +244,10 @@ function LoginForm() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
+          <div className="footer-text">
+            <p>
               Don't have an account?{" "}
-              <a href="/register" className="font-medium text-red-400 hover:text-red-300 transition-colors">
+              <a href="/register">
                 Get spicy now
               </a>
             </p>
@@ -164,4 +259,3 @@ function LoginForm() {
 }
 
 export default LoginForm
-

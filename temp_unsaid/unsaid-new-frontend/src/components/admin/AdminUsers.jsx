@@ -40,9 +40,139 @@ const adminUserStyles = `
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
 
-.spicy-bg {
-  background-color: #1a1a1a;
-  // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+.admin-container {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 0.75rem;
+}
+
+.user-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.user-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: white;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  margin-left: 0.5rem;
+}
+
+.user-actions {
+  padding: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.action-button:hover {
+  opacity: 0.9;
+}
+
+.action-button:active {
+  transform: scale(0.98);
+}
+
+.sort-button {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.sort-button:hover {
+  background-color: rgba(75, 85, 99, 0.2);
+}
+
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 61, 0, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 61, 0, 0.7);
+}
+
+@media (max-width: 640px) {
+  .user-grid {
+    grid-template-columns: 1fr;
+  }
 }
 `
 
@@ -137,9 +267,11 @@ const AdminUsers = () => {
 
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg p-8 shadow-lg text-center">
-        <FaSpinner className="text-red-500 text-4xl animate-spin mx-auto mb-4" />
-        <p className="text-gray-300">Loading gossip network users...</p>
+      <div className="admin-container">
+        <div className="bg-gray-900 rounded-lg p-6 shadow-lg text-center">
+          <FaSpinner className="text-red-500 text-3xl animate-spin mx-auto mb-3" />
+          <p className="text-gray-300">Loading gossip network users...</p>
+        </div>
       </div>
     )
   }
@@ -147,122 +279,109 @@ const AdminUsers = () => {
   return (
     <>
       <style>{adminUserStyles}</style>
-      <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-800 spicy-bg">
-        <div className="p-5 border-b border-gray-800 spicy-gradient">
-          <h2 className="text-2xl font-bold text-white flex items-center">
-            <FaUserSecret className="mr-2 glow-pulse" />
-            Gossip Network Users
-          </h2>
-        </div>
-
-        <div className="p-5 bg-gray-900">
-          <div className="mb-6">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-red-500" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-              />
-            </div>
+      <div className="admin-container">
+        <div className="bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-800">
+          <div className="p-3 border-b border-gray-800 spicy-gradient">
+            <h2 className="text-xl font-bold text-white flex items-center">
+              <FaUserSecret className="mr-2 glow-pulse" />
+              Gossip Network Users
+            </h2>
           </div>
 
-          {sortedUsers.length === 0 ? (
-            <div className="bg-gray-800 rounded-lg p-6 text-center">
-              <FaUserSecret className="text-red-500 text-4xl mx-auto mb-3" />
-              <p className="text-gray-300 text-lg">No users found.</p>
-              <p className="text-gray-500 mt-2">Try a different search term.</p>
+          <div className="p-3 bg-gray-900">
+            <div className="mb-3">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-red-500" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search users by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-colors"
+                />
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-                <thead>
-                  <tr className="bg-gray-700 text-gray-200 text-left">
-                    <th className="px-6 py-3 cursor-pointer" onClick={() => handleSort("name")}>
-                      <div className="flex items-center">Name {getSortIcon("name")}</div>
-                    </th>
-                    <th className="px-6 py-3 cursor-pointer" onClick={() => handleSort("email")}>
-                      <div className="flex items-center">Email {getSortIcon("email")}</div>
-                    </th>
-                    <th className="px-6 py-3 cursor-pointer" onClick={() => handleSort("role")}>
-                      <div className="flex items-center">Role {getSortIcon("role")}</div>
-                    </th>
-                    <th className="px-6 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {sortedUsers.map((user, index) => (
-                    <tr
-                      key={user._id}
-                      className={`text-gray-300 hover:bg-gray-700 transition-all duration-200 ${
-                        animateIndex === index ? "transform scale-105 bg-gray-700" : ""
-                      } fade-slide-in`}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
-                              user.role === "admin" ? "spicy-gradient" : "bg-gray-700"
-                            }`}
-                          >
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="font-medium">{user.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">{user.email}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            user.role === "admin" ? "bg-red-500 text-white" : "bg-gray-600 text-gray-200"
-                          }`}
-                        >
-                          {user.role === "admin" ? (
-                            <div className="flex items-center">
-                              <FaUserShield className="mr-1" />
-                              Moderator
-                            </div>
-                          ) : (
-                            <div className="flex items-center">
-                              <FaUserSecret className="mr-1" />
-                              Gossiper
-                            </div>
-                          )}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleToggleAdmin(user, index)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
-                            user.role === "admin"
-                              ? "bg-gray-700 text-red-400 hover:bg-gray-600 border border-red-500"
-                              : "spicy-gradient text-white hover:opacity-90"
-                          }`}
-                        >
-                          {user.role === "admin" ? (
-                            <>
-                              <FaUserMinus className="mr-1" />
-                              Remove Moderator
-                            </>
-                          ) : (
-                            <>
-                              <FaUserPlus className="mr-1" />
-                              Make Moderator
-                            </>
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            <div className="mb-3 flex flex-wrap gap-2">
+              <div className="sort-button" onClick={() => handleSort("name")}>
+                <span className="text-sm text-gray-300">Name</span>
+                {getSortIcon("name")}
+              </div>
+              <div className="sort-button" onClick={() => handleSort("email")}>
+                <span className="text-sm text-gray-300">Email</span>
+                {getSortIcon("email")}
+              </div>
+              <div className="sort-button" onClick={() => handleSort("role")}>
+                <span className="text-sm text-gray-300">Role</span>
+                {getSortIcon("role")}
+              </div>
             </div>
-          )}
+
+            {sortedUsers.length === 0 ? (
+              <div className="bg-gray-800 rounded-lg p-5 text-center">
+                <FaUserSecret className="text-red-500 text-3xl mx-auto mb-3" />
+                <p className="text-gray-300 text-base">No users found.</p>
+                <p className="text-gray-500 mt-2 text-sm">Try a different search term.</p>
+              </div>
+            ) : (
+              <div className="user-grid custom-scrollbar">
+                {sortedUsers.map((user, index) => (
+                  <div
+                    key={user._id}
+                    className={`user-card ${animateIndex === index ? "transform scale-105" : ""} fade-slide-in`}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="user-header">
+                      <div className={`user-avatar ${user.role === "admin" ? "spicy-gradient" : "bg-gray-700"}`}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="user-info">
+                        <div className="user-name">{user.name}</div>
+                        <div className="user-email">{user.email}</div>
+                      </div>
+                      <div className={`user-role ${user.role === "admin" ? "bg-red-500" : "bg-gray-600"}`}>
+                        {user.role === "admin" ? (
+                          <>
+                            <FaUserShield className="mr-1" />
+                            Mod
+                          </>
+                        ) : (
+                          <>
+                            <FaUserSecret className="mr-1" />
+                            User
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="user-actions">
+                      <button
+                        onClick={() => handleToggleAdmin(user, index)}
+                        className={`action-button ${
+                          user.role === "admin"
+                            ? "bg-gray-700 text-red-400 border border-red-500"
+                            : "spicy-gradient text-white"
+                        }`}
+                      >
+                        {user.role === "admin" ? (
+                          <>
+                            <FaUserMinus className="mr-1" />
+                            Remove Mod
+                          </>
+                        ) : (
+                          <>
+                            <FaUserPlus className="mr-1" />
+                            Make Mod
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

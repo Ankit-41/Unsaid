@@ -4,39 +4,50 @@ import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { authAPI } from "../../services/api"
 import toast from "react-hot-toast"
-import { FaBell, FaUser, FaSignOutAlt, FaCog, FaUserCircle, FaTimes, FaPepperHot, FaFire } from "react-icons/fa"
+import { FaBell, FaUser, FaSignOutAlt, FaCog, FaUserCircle, FaTimes, FaFire, FaPepperHot } from "react-icons/fa"
 
 // Add this to your global CSS or component
 const navbarStyles = `
-@keyframes heatPulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(255, 61, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }
+@keyframes flameFlicker {
+  0% { transform: scale(0.97); opacity: 0.8; }
+  50% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(0.97); opacity: 0.8; }
 }
 
-.heat-pulse {
-  animation: heatPulse 2s infinite;
+.flame-flicker {
+  animation: flameFlicker 3s infinite;
 }
 
-@keyframes spicyShake {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(1deg); }
-  50% { transform: rotate(0deg); }
-  75% { transform: rotate(-1deg); }
-  100% { transform: rotate(0deg); }
-}
-
-.spicy-shake:hover {
-  animation: spicyShake 0.5s ease-in-out;
-}
-
-.spicy-gradient {
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.spicy-bg {
-  background-color: #1a1a1a;
-  // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+.navbar-container {
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dropdown-menu {
+  animation: dropIn 0.2s ease-out;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 `
 
@@ -69,7 +80,7 @@ function Navbar() {
       await authAPI.logout()
       toast.success("Logged out successfully", {
         icon: "🔥",
-        style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
+        style: { background: "#333", color: "#fff", border: "1px solid #4caf50" },
       })
       navigate("/login")
     } catch (error) {
@@ -94,68 +105,65 @@ function Navbar() {
   return (
     <>
       <style>{navbarStyles}</style>
-      <nav className="sticky top-0 z-50 spicy-bg border-b border-gray-800">
-        <div className="container mx-auto px-4 py-3">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-red-900 to-red-700 shadow-md">
+        <div className="navbar-container px-4 py-2">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <a
-              className="text-white text-2xl font-bold tracking-tight hover:text-red-400 transition-colors flex items-center spicy-shake"
+              className="text-white text-xl font-bold tracking-tight hover:text-red-100 transition-colors flex items-center"
               href="/posts"
             >
-              <FaPepperHot className="mr-2 text-red-500 heat-pulse" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">Unsaid</span>
+              <FaFire className="mr-1 text-yellow-400 flame-flicker" />
+              <span>Unsaid</span>
             </a>
 
             {/* Right side controls */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {/* Notifications */}
               <div className="relative" ref={notificationRef}>
                 <button
-                  className="relative p-2 text-white rounded-full hover:bg-red-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  className="relative p-2 text-white rounded-full hover:bg-white/10 transition-colors focus:outline-none"
                   onClick={toggleNotifications}
                   aria-label="Notifications"
                 >
-                  <FaBell size={20} className="text-red-400" />
+                  <FaBell size={18} />
                   {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full spicy-gradient text-xs font-bold text-white heat-pulse">
-                      {notifications.length > 9 ? "9+" : notifications.length}
-                    </span>
+                    <span className="notification-badge">{notifications.length > 9 ? "9+" : notifications.length}</span>
                   )}
                 </button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 rounded-lg bg-gray-800 shadow-xl ring-1 ring-red-500/20 transition-all duration-200 ease-in-out origin-top-right animate-in fade-in slide-in-from-top-5">
-                    <div className="p-3 border-b border-gray-700">
+                  <div className="dropdown-menu absolute right-0 mt-2 w-72 rounded-lg bg-gray-900 shadow-xl border border-gray-800 overflow-hidden">
+                    <div className="p-3 border-b border-gray-800 bg-gradient-to-r from-red-900 to-red-700">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-white flex items-center">
-                          <FaFire className="mr-2 text-red-500" />
-                          Hot Notifications
+                        <h3 className="text-base font-semibold text-white flex items-center">
+                          <FaPepperHot className="mr-1 text-yellow-400" /> Hot Notifications
                         </h3>
                         <button
-                          className="text-gray-400 hover:text-red-400 transition-colors"
+                          className="text-gray-200 hover:text-white transition-colors"
                           onClick={() => setShowNotifications(false)}
                         >
-                          <FaTimes size={16} />
+                          <FaTimes size={14} />
                         </button>
                       </div>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="py-8 px-4 text-center">
-                          <div className="mx-auto w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center mb-3">
-                            <FaBell className="text-gray-500" size={20} />
+                        <div className="py-6 px-4 text-center">
+                          <div className="mx-auto w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center mb-2">
+                            <FaBell className="text-gray-500" size={16} />
                           </div>
-                          <p className="text-gray-400">No hot gossip notifications yet</p>
+                          <p className="text-gray-400 text-sm">No spicy notifications yet</p>
                         </div>
                       ) : (
                         notifications.map((notification, index) => (
                           <a
                             key={index}
-                            className="block px-4 py-3 hover:bg-gray-700 border-b border-gray-700 last:border-0 transition-colors"
+                            className="block px-4 py-3 hover:bg-gray-800 border-b border-gray-800 last:border-0 transition-colors"
                             href="#"
                           >
-                            <p className="text-sm text-gray-200">{notification.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-sm text-gray-300">{notification.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">
                               {new Date(notification.timestamp).toLocaleTimeString()}
                             </p>
                           </a>

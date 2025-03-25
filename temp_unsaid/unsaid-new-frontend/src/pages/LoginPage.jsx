@@ -27,9 +27,61 @@ const loginPageStyles = `
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
 
-.chili-pattern {
-  background-color: #1a1a1a;
-  // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #121212;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 61, 0, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 61, 0, 0.05) 0%, transparent 50%);
+  padding: 1rem;
+}
+
+.content-container {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.logo-container {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.app-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #ff3d00, #ffab00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-top: 0.5rem;
+}
+
+.app-subtitle {
+  color: #d1d5db;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: rgba(185, 28, 28, 0.3);
+  color: #fecaca;
+  margin-top: 0.75rem;
+}
+
+.footer-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 1.5rem;
 }
 `
 
@@ -37,21 +89,17 @@ function LoginPage() {
   return (
     <>
       <style>{loginPageStyles}</style>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 chili-pattern">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <FaFire className="text-red-500 text-6xl flame-flicker" />
-                <FaPepperHot className="text-red-600 text-3xl absolute -right-4 -bottom-2 float-chili" />
-              </div>
+      <div className="page-container">
+        <div className="content-container">
+          <div className="logo-container">
+            <div className="relative inline-block">
+              <FaFire className="text-red-500 text-5xl flame-flicker" />
+              <FaPepperHot className="text-red-600 text-2xl absolute -right-3 -bottom-1 float-chili" />
             </div>
-            <h1 className="text-4xl font-extrabold text-white bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">
-              Unsaid
-            </h1>
-            <p className="mt-2 text-xl text-gray-300">Where the hottest gossip burns brightest</p>
-            <div className="mt-3 flex justify-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-900 text-red-100">
+            <h1 className="app-title">Unsaid</h1>
+            <p className="app-subtitle">Where the hottest gossip burns brightest</p>
+            <div className="flex justify-center">
+              <span className="badge">
                 <FaFire className="mr-1" /> 100% Anonymous
               </span>
             </div>
@@ -59,7 +107,7 @@ function LoginPage() {
 
           <LoginForm />
 
-          <div className="text-center text-sm text-gray-500">
+          <div className="footer-text">
             <p>By signing in, you agree to our spicy terms and conditions.</p>
             <p className="mt-1">We never reveal your identity unless you choose to.</p>
           </div>

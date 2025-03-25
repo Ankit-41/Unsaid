@@ -42,9 +42,123 @@ const postStyles = `
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
 
-.spicy-bg {
-  // background-color: #1a1a1a;
-  // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+.post-card {
+  max-width: 500px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.post-content-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-content {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  line-height: 1.4;
+  padding: 1rem;
+  overflow-y: auto;
+  word-break: break-word;
+  max-height: 100%;
+  height: 100%;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.75rem;
+  border-top: 1px solid rgba(255, 61, 0, 0.2);
+  background-color: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(4px);
+}
+
+.action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #9CA3AF;
+  transition: all 0.2s;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.action-button:active {
+  background-color: rgba(255, 61, 0, 0.1);
+  transform: scale(0.95);
+}
+
+.action-button .count {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.comment-modal {
+  width: 100%;
+  max-width: 450px;
+  max-height: 85vh;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.comment-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.comment-item {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 61, 0, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 61, 0, 0.7);
+}
+
+@media (min-width: 768px) {
+  .post-card {
+    max-width: 450px;
+  }
+  
+  .comment-modal {
+    width: 90%;
+  }
+}
+
+@media (max-height: 700px) {
+  .comment-list {
+    max-height: 40vh;
+  }
+}
+
+@media (max-height: 600px) {
+  .comment-list {
+    max-height: 35vh;
+  }
 }
 `
 
@@ -168,32 +282,32 @@ function Post({ post, isActive }) {
   return (
     <>
       <style>{postStyles}</style>
-      <div className="flex flex-col h-full spicy-bg relative">
+      <div className="max-h-[calc(100vh-150px)] post-card bg-gradient-to-b from-gray-900 to-gray-800">
         {/* Header */}
-        <div className="p-4 border-b border-gray-800 bg-gray-900 shadow-md">
+        <div className="p-3 border-b border-gray-800 bg-gray-900 bg-opacity-80">
           <div className="flex items-center">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center spicy-gradient text-white mr-4 shadow-md">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center spicy-gradient text-white mr-3">
               {post.isAnonymous ? <FaFire className="text-white" /> : post.author.name.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <h6 className="text-lg font-semibold text-white flex items-center">
+            <div className="flex-1 min-w-0">
+              <h6 className="text-base font-semibold text-white flex items-center truncate">
                 {post.isAnonymous ? "Anonymous" : post.author.name}
                 {post.isAnonymous && (
-                  <span className="ml-2 text-xs bg-red-900/50 text-red-400 px-2 py-1 rounded-full">
-                    Incognito Gossiper
+                  <span className="ml-2 text-xs bg-red-900/50 text-red-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    Incognito
                   </span>
                 )}
               </h6>
-              <small className="text-gray-400">{new Date(post.createdAt).toLocaleString()}</small>
+              <small className="text-gray-400 text-xs">{new Date(post.createdAt).toLocaleString()}</small>
             </div>
 
             {/* Spicy Level Indicator */}
-            <div className="ml-auto flex items-center">
-              <span className="text-gray-400 text-sm mr-2">Spicy:</span>
+            <div className="flex items-center">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
                   <FaPepperHot
                     key={i}
+                    size={i < spicyLevel ? 14 : 12}
                     className={`${i < spicyLevel ? "text-red-500" : "text-gray-600"} ${
                       i === spicyLevel - 1 ? "heat-pulse" : ""
                     }`}
@@ -204,109 +318,109 @@ function Post({ post, isActive }) {
           </div>
         </div>
 
-        {/* Post Content */}
-        <div className="flex-grow p-8 flex items-center justify-center overflow-auto">
-          <div className="text-3xl md:text-4xl text-center font-medium text-white max-w-2xl mx-auto px-4 spicy-shake">
+        {/* Post Content - Now in a wrapper with fixed height */}
+        <div className="post-content-wrapper bg-gray-800 bg-opacity-90" style={{ height: "calc(100% - 140px)" }}>
+          <div className="post-content text-white spicy-shake custom-scrollbar">
             {post.content}
           </div>
         </div>
 
-        {/* Interactive Controls – visible only if active */}
-        <div
-          className={`p-3 mb-20 pt-3 pb-3 border-t border-gray-800 bg-gray-900 shadow-md transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0"}`}
-        >
-          <div className="flex justify-between items-center max-w-md mx-auto">
-            <button
-              className="flex items-center space-x-2 py-2 px-4 rounded-full transition-colors hover:bg-red-900/30"
-              onClick={toggleLike}
-              disabled={!isActive}
-            >
-              {/* Show red heart if liked OR if we got an "already liked" error */}
-              {liked ? (
-                <FaHeart className="text-xl text-red-500 heat-pulse" />
-              ) : (
-                <FaRegHeart className="text-xl text-gray-400" />
-              )}
+        {/* Interactive Controls - Now fixed at the bottom */}
+        <div className={`post-actions sticky bottom-0 ${isActive ? "" : "opacity-50 pointer-events-none"}`}>
+          <button
+            className="action-button"
+            onClick={toggleLike}
+            disabled={!isActive}
+            aria-label={liked ? "Unlike post" : "Like post"}
+          >
+            {liked ? <FaHeart className="text-xl text-red-500 heat-pulse" /> : <FaRegHeart className="text-xl" />}
+            <span className="count" style={{ color: liked || alreadyLikedError ? "#FF3D00" : "inherit" }}>
+              {likeCount}
+            </span>
+          </button>
 
-              <span className="font-medium" style={{ color: liked || alreadyLikedError ? "#FF3D00" : "#9CA3AF" }}>
-                {likeCount}
-              </span>
-            </button>
+          <button className="action-button" onClick={openComments} disabled={!isActive} aria-label="View comments">
+            <FaComment className="text-xl" />
+            <span className="count">{comments.length}</span>
+          </button>
 
-            <button
-              className="flex items-center space-x-2 py-2 px-4 rounded-full text-gray-400 hover:bg-red-900/30 transition-colors"
-              onClick={openComments}
-              disabled={!isActive}
-            >
-              <FaComment className="text-xl" />
-              <span className="font-medium">{comments.length}</span>
-            </button>
-
-            <button
-              className="flex items-center space-x-2 py-2 px-4 rounded-full text-gray-400 hover:bg-red-900/30 transition-colors"
-              disabled={!isActive}
-            >
-              <FaShare className="text-xl" />
-            </button>
-          </div>
+          <button className="action-button" disabled={!isActive} aria-label="Share post">
+            <FaShare className="text-xl" />
+            <span className="count">Share</span>
+          </button>
         </div>
 
-        {/* Comment Modal Popup */}
+        {/* Comment Modal Popup - Improved for mobile */}
         {showCommentModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4">
-            <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden relative animate-fadeIn">
-              <div className="flex items-center justify-between p-5 border-b border-gray-800 spicy-gradient">
-                <h2 className="text-xl font-bold text-white flex items-center">
-                  <FaFire className="mr-2 text-yellow-400" />
-                  Spicy Comments
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-2">
+            <div className="comment-modal bg-gray-900 animate-fadeIn">
+              {/* Compact header */}
+              <div className="flex items-center justify-between p-2 border-b border-gray-800 bg-gradient-to-r from-red-900 to-red-700">
+                <h2 className="text-sm font-bold text-white flex items-center">
+                  <FaFire className="mr-1 text-yellow-400" />
+                  <span>Comments</span>
+                  <span className="ml-2 bg-gray-800 text-white text-xs px-2 py-0.5 rounded-full">
+                    {comments.length}
+                  </span>
                 </h2>
                 <button
                   onClick={closeComments}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-white hover:bg-red-900/50 transition-colors"
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-white hover:bg-red-900/50 transition-colors"
+                  aria-label="Close comments"
                 >
-                  <FaTimes size={18} />
+                  <FaTimes size={12} />
                 </button>
               </div>
 
-              <div className="max-h-72 overflow-y-auto p-4 bg-gray-800">
+              {/* Comment list with improved scrolling */}
+              <div className="comment-list p-2 bg-gray-800 custom-scrollbar">
                 {comments.length > 0 ? (
                   comments.map((comment, index) => (
-                    <div key={index} className="p-3 mb-3 rounded-lg bg-gray-700 border border-gray-600">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center spicy-gradient text-white shadow-sm">
+                    <div key={index} className="comment-item">
+                      <div className="flex items-start space-x-2">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center spicy-gradient text-white flex-shrink-0">
                           {comment.user.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <h6 className="font-semibold text-white">{comment.user.name}</h6>
-                          <small className="text-gray-400">{new Date(comment.createdAt).toLocaleString()}</small>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline justify-between">
+                            <h6 className="font-semibold text-white text-xs truncate">{comment.user.name}</h6>
+                            <small className="text-gray-400 text-xs ml-1 whitespace-nowrap">
+                              {new Date(comment.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </small>
+                          </div>
+                          <p className="text-gray-300 text-xs break-words">{comment.text}</p>
                         </div>
                       </div>
-                      <p className="text-gray-300 pl-12">{comment.text}</p>
                     </div>
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                    <FaPepperHot className="text-4xl mb-3 text-red-500 opacity-30" />
-                    <p>No spicy comments yet. Be the first to add some heat!</p>
+                  <div className="flex flex-col items-center justify-center py-4 text-gray-500">
+                    <FaPepperHot className="text-2xl mb-2 text-red-500 opacity-30" />
+                    <p className="text-xs">No spicy comments yet. Add some heat!</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-4 border-t border-gray-800 bg-gray-800">
+              {/* Comment input - Compact and mobile friendly */}
+              <div className="p-2 border-t border-gray-800 bg-gray-800">
                 <form onSubmit={handleCommentSubmit} className="flex">
                   <input
                     type="text"
-                    className="flex-grow p-3 border border-gray-700 rounded-l-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-gray-400"
+                    className="flex-grow p-2 border border-gray-700 rounded-l-lg bg-gray-700 text-white text-sm focus:outline-none focus:ring-1 focus:ring-red-500 placeholder-gray-400"
                     placeholder="Add your spicy take..."
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                   />
                   <button
                     type="submit"
-                    className="px-4 spicy-gradient text-white rounded-r-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center"
+                    className="px-3 spicy-gradient text-white rounded-r-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center"
                     disabled={!commentText.trim()}
+                    aria-label="Submit comment"
                   >
-                    <FaPaperPlane />
+                    <FaPaperPlane size={14} />
                   </button>
                 </form>
               </div>
@@ -319,4 +433,3 @@ function Post({ post, isActive }) {
 }
 
 export default Post
-

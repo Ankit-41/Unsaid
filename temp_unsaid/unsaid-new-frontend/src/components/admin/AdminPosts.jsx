@@ -466,4 +466,3 @@ const AdminPosts = () => {
 }
 
 export default AdminPosts
-

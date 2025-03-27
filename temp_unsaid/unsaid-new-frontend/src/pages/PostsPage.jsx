@@ -7,34 +7,28 @@ import ComposeButton from "../components/posts/ComposeButton"
 import { FaChevronLeft, FaChevronRight, FaPepperHot, FaFire } from "react-icons/fa"
 import toast from "react-hot-toast"
 
-// Add this to your global CSS or component
 const postsPageStyles = `
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  /* Ensure posts container is centered and takes available viewport space minus navbar height */
+  .posts-wrapper {
+    max-width: 500px;
+    // margin: 60px auto 0; /* 60px top margin to account for the fixed navbar */
+    height: calc(100vh - 60px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-  }
-  
+
+  /* Each post container is absolutely centered so that only one is visible at a time */
   .post-container {
-    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease, rotate 0.6s ease;
-    will-change: transform;
+    position: absolute;
+    width: 100%;
+    padding: 20px;
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease;
   }
-  
-  .post-container.active {
-    z-index: 10;
-  }
-  
-  .post-container.prev {
-    z-index: 5;
-  }
-  
-  .post-container.next {
-    z-index: 5;
-  }
-  
+
+  /* Navigation Buttons */
   .nav-button {
     transition: all 0.2s ease;
     width: 40px;
@@ -56,7 +50,7 @@ const postsPageStyles = `
   .nav-button:active:not(:disabled) {
     transform: scale(0.95);
   }
-
+  
   @keyframes heatPulse {
     0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
     70% { box-shadow: 0 0 0 10px rgba(255, 61, 0, 0); }
@@ -65,93 +59,6 @@ const postsPageStyles = `
   
   .heat-pulse {
     animation: heatPulse 2s infinite;
-  }
-
-  .posts-wrapper {
-    max-width: 500px;
-    margin: 0 auto;
-    height: calc(100vh - 140px);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .swipe-indicator {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    z-index: 20;
-  }
-
-  .swipe-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
-  }
-
-  .swipe-dot.active {
-    background-color: rgba(255, 61, 0, 0.8);
-    transform: scale(1.2);
-  }
-
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-  }
-
-  .loading-pepper {
-    animation: bounce 1.5s infinite alternate;
-  }
-
-  @keyframes bounce {
-    from { transform: translateY(0); }
-    to { transform: translateY(-15px); }
-  }
-
-  .error-container {
-    max-width: 90%;
-    width: 350px;
-  }
-
-  /* Skeleton loading styles */
-  .skeleton {
-    background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 0.5rem;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* Custom scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 61, 0, 0.5);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 61, 0, 0.7);
   }
 `
 
@@ -164,10 +71,9 @@ function PostsPage() {
   const [hasMore, setHasMore] = useState(true)
   const [scrollLocked, setScrollLocked] = useState(false)
   const [touchStartX, setTouchStartX] = useState(0)
-  const [touchEndX, setTouchEndX] = useState(0)
-  const [swiping, setSwiping] = useState(false)
   const [swipeOffset, setSwipeOffset] = useState(0)
   const [swipeDirection, setSwipeDirection] = useState(null) // 'left' or 'right'
+  const [swiping, setSwiping] = useState(false)
 
   const containerRef = useRef(null)
   const lastScrollTime = useRef(0)
@@ -181,7 +87,6 @@ function PostsPage() {
     try {
       setLoading(true)
       const response = await postsAPI.getApprovedPosts(page)
-      // Extract posts from data and pagination from the top level
       const newPosts = response.data.data.posts
       const currentPage = response.data.currentPage
       const totalPages = response.data.totalPages
@@ -201,7 +106,7 @@ function PostsPage() {
     }
   }
 
-  // When user nears the end, automatically fetch more posts if available.
+  // Auto-fetch more posts when nearing the end
   useEffect(() => {
     if (posts.length > 0 && currentPostIndex >= posts.length - 2 && hasMore && !loading) {
       fetchPosts()
@@ -247,7 +152,7 @@ function PostsPage() {
     }
   }, [currentPostIndex, posts.length, scrollLocked])
 
-  // Touch handlers for horizontal swiping
+  // Touch handlers for swiping
   const handleTouchStart = (e) => {
     setTouchStartX(e.touches[0].clientX)
     setSwiping(true)
@@ -258,35 +163,20 @@ function PostsPage() {
     if (!swiping) return
     const currentX = e.touches[0].clientX
     const diff = touchStartX - currentX
-    // Determine swipe direction
-    if (diff > 0) {
-      setSwipeDirection("left")
-    } else {
-      setSwipeDirection("right")
-    }
-    // Limit the swipe distance
+    setSwipeDirection(diff > 0 ? "left" : "right")
     const maxSwipe = window.innerWidth * 0.4
-    const limitedDiff = Math.max(Math.min(diff, maxSwipe), -maxSwipe)
-    setSwipeOffset(limitedDiff)
+    setSwipeOffset(Math.max(Math.min(diff, maxSwipe), -maxSwipe))
   }
 
   const handleTouchEnd = (e) => {
     setSwiping(false)
     setSwipeOffset(0)
-
-    if (scrollLocked) return
-
     const endX = e.changedTouches[0].clientX
-    setTouchEndX(endX)
-
     const diff = touchStartX - endX
-    const minSwipeDistance = 50 // Minimum distance to trigger a swipe
-
+    const minSwipeDistance = 50
     if (diff > minSwipeDistance) {
-      // Swiped left, go to next post
       navigateToNext()
     } else if (diff < -minSwipeDistance) {
-      // Swiped right, go to previous post
       navigateToPrev()
     }
   }
@@ -305,7 +195,6 @@ function PostsPage() {
 
   const navigateToNext = async () => {
     if (!scrollLocked) {
-      // If at the last post but more posts are available, fetch additional posts first.
       if (currentPostIndex >= posts.length - 1) {
         if (hasMore) {
           await fetchPosts()
@@ -334,115 +223,39 @@ function PostsPage() {
     }
   }
 
-  const getPostClassName = (index) => {
-    if (index === currentPostIndex) return "post-container active"
-    if (index < currentPostIndex) return "post-container prev"
-    return "post-container next"
-  }
-
-  // Modified getPostStyle to correctly animate the outgoing and incoming cards
   const getPostStyle = (index) => {
-    const baseStyle = {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      visibility: Math.abs(index - currentPostIndex) > 1 ? "hidden" : "visible",
-    }
-
-    // Default horizontal positioning
-    let transform = `translateX(${(index - currentPostIndex) * 100}%)`
+    const offset = (index - currentPostIndex) * 100
+    let transform = `translateX(${offset}%)`
     let opacity = 1
 
-    // Adjust animation based on swipe direction (when not actively dragging)
+    // Animate based on swipe and direction
     if (swipeDirection && !swiping) {
-      if (swipeDirection === "left") {
-        // After a left swipe, currentPostIndex is incremented.
-        // The outgoing (old) card is at currentPostIndex - 1.
-        if (index === currentPostIndex - 1) {
-          transform = `translateX(-100%) rotate(-5deg)`
-          opacity = 0
-        } else if (index === currentPostIndex) {
-          transform = `translateX(0%) rotate(0deg)`
-          opacity = 1
-        }
-      } else if (swipeDirection === "right") {
-        // After a right swipe, currentPostIndex is decremented.
-        // The outgoing (old) card is at currentPostIndex + 1.
-        if (index === currentPostIndex + 1) {
-          transform = `translateX(100%) rotate(5deg)`
-          opacity = 0
-        } else if (index === currentPostIndex) {
-          transform = `translateX(0%) rotate(0deg)`
-          opacity = 1
-        }
+      if (swipeDirection === "left" && index === currentPostIndex - 1) {
+        transform = `translateX(-100%) rotate(-5deg)`
+        opacity = 0
+      } else if (swipeDirection === "right" && index === currentPostIndex + 1) {
+        transform = `translateX(100%) rotate(5deg)`
+        opacity = 0
       }
     }
-
-    // When actively swiping, update transform based on swipe offset.
-    if (swiping) {
-      if (index === currentPostIndex) {
-        transform = `translateX(${-swipeOffset}px) rotate(${-swipeOffset * 0.02}deg)`
-      } else if (index === currentPostIndex + 1) {
-        transform = `translateX(calc(100% - ${swipeOffset}px)) rotate(${(100 - swipeOffset) * 0.02}deg)`
-      } else if (index === currentPostIndex - 1) {
-        transform = `translateX(calc(-100% - ${swipeOffset}px)) rotate(${(-100 - swipeOffset) * 0.02}deg)`
-      }
+    if (swiping && index === currentPostIndex) {
+      transform = `translateX(${-swipeOffset}px) rotate(${-swipeOffset * 0.02}deg)`
     }
-
     return {
-      ...baseStyle,
       transform,
       opacity,
-      transition: "transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease, rotate 0.6s ease",
     }
   }
-
-  // Skeleton loading component
-  const SkeletonPost = () => (
-    <div className="post-card bg-gray-900 h-full flex flex-col">
-      <div className="p-3 border-b border-gray-800 bg-gray-900">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full skeleton mr-3"></div>
-          <div className="flex-1">
-            <div className="h-4 skeleton w-24 mb-2"></div>
-            <div className="h-3 skeleton w-32"></div>
-          </div>
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="w-3 h-3 rounded-full skeleton mx-0.5"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="flex-grow flex items-center justify-center bg-gray-800 p-4">
-        <div className="w-full">
-          <div className="h-6 skeleton w-full mb-4"></div>
-          <div className="h-6 skeleton w-3/4 mb-4"></div>
-          <div className="h-6 skeleton w-5/6"></div>
-        </div>
-      </div>
-      <div className="p-3 bg-gray-900 flex justify-around">
-        <div className="h-8 w-16 skeleton rounded-full"></div>
-        <div className="h-8 w-16 skeleton rounded-full"></div>
-        <div className="h-8 w-16 skeleton rounded-full"></div>
-      </div>
-    </div>
-  )
 
   if (loading && posts.length === 0) {
     return (
       <div className="relative bg-gray-900 min-h-screen">
         <style>{postsPageStyles}</style>
-        <div className="h-screen overflow-hidden bg-gray-900" style={{ paddingTop: "60px" }}>
-          <div className="posts-wrapper">
-            <SkeletonPost />
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-70 backdrop-blur-sm">
-              <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
-              <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
-              <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
-            </div>
+        <div className="h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
+            <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
+            <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
           </div>
         </div>
       </div>
@@ -452,7 +265,7 @@ function PostsPage() {
   if (error && posts.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen p-6 bg-gray-900">
-        <div className="error-container bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md">
+        <div className="bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md max-w-sm w-full">
           <div className="flex items-center mb-4">
             <FaFire className="text-red-500 text-2xl mr-3" />
             <h3 className="text-lg font-semibold">Too Hot to Handle</h3>
@@ -471,25 +284,24 @@ function PostsPage() {
 
   return (
     <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
-      {/* Add the CSS */}
       <style>{postsPageStyles}</style>
-
-      {/* Posts container */}
       <div
         className="overflow-hidden"
         ref={containerRef}
-        style={{ paddingTop: "60px" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <div className="posts-wrapper">
           {posts.map((post, index) => (
-            <div key={post._id} className={getPostClassName(index)} style={getPostStyle(index)}>
+            <div
+              key={post._id}
+              className="post-container"
+              style={getPostStyle(index)}
+            >
               <Post post={post} isActive={index === currentPostIndex} />
             </div>
           ))}
-
           {/* Navigation Controls */}
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
             <button
@@ -501,7 +313,6 @@ function PostsPage() {
               <FaChevronLeft className="text-red-500" />
             </button>
           </div>
-
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30">
             <button
               onClick={navigateToNext}
@@ -512,12 +323,8 @@ function PostsPage() {
               <FaChevronRight className="text-red-500" />
             </button>
           </div>
-
-          
         </div>
       </div>
-
-      {/* Floating Compose Button */}
       <ComposeButton />
     </div>
   )

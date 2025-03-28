@@ -47,9 +47,9 @@ router.get('/:id', getPost);
 // Routes that require email verification
 router.use(isVerified);
 
-// Update the create post route to use express-fileupload middleware
+// Update the create post route to use Multer middleware
 router.post('/', 
-  upload, // Handle file upload
+  upload.single('image'), // Handle single image upload
   validate(postSchema), // Then validate
   createPost
 );

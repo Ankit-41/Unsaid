@@ -132,7 +132,7 @@ const HomePage = () => {
                         ))}
                       </div>
                     </div>
-                    <p className="text-zinc-300 mb-4">I never thought I'd find friends who truly get me until I joined the astronomy club. Best decision ever! 🌠</p>
+                    <p className="text-zinc-300 mb-4">nd friends who truly get me until I joined the astronomy club. Best decision ever! 🌠</p>
                     <div className="grid grid-cols-4 gap-1 h-32 overflow-hidden rounded-lg bg-zinc-800">
                       <div className="col-span-4 h-full bg-gradient-to-br from-violet-500/40 to-fuchsia-500/40"></div>
                     </div>
@@ -159,7 +159,7 @@ const HomePage = () => {
                         ))}
                       </div>
                     </div>
-                    <p className="mb-4">Anyone else having trouble with the WiFi in the Ravindra Bhawan? Been disconnecting all day!</p>
+                    <p className="mb-4">Kisi ko pata hai Divine mein kal kiski kiski ladai hui thi. sunne mein aaya hai 3rd year pil gya</p>
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span className="flex items-center gap-1"><Heart className="h-4 w-4" /> 12</span>
                       <span className="flex items-center gap-1"><MessageCircle className="h-4 w-4" /> 8</span>

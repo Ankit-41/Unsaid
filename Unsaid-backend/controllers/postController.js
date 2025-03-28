@@ -1,5 +1,6 @@
 import Post from '../models/Post.js';
 import cloudinary from '../config/cloudinary.js';
+import { uploadToCloudinary } from '../middleware/upload.js';
 
 // Export all controller functions
 
@@ -48,7 +49,7 @@ export const createPost = async (req, res) => {
     console.log('Create post request received:');
     console.log('Content Type:', req.headers['content-type']);
     console.log('Body:', req.body);
-    console.log('Files:', req.files);
+    console.log('File:', req.file);
     
     // Get the content from request body
     const { content } = req.body;
@@ -92,23 +93,18 @@ export const createPost = async (req, res) => {
     };
     
     // Handle image if uploaded
-    if (req.files && req.files.image) {
+    if (req.file) {
       try {
-        const image = req.files.image;
-        console.log('Image uploaded:', {
-          name: image.name,
-          size: image.size,
-          tempFilePath: image.tempFilePath
+        console.log('Image uploaded through Multer:', {
+          name: req.file.originalname,
+          size: req.file.size,
+          mimetype: req.file.mimetype
         });
         
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(image.tempFilePath, {
-          folder: 'unsaid_uploads',
-          resource_type: 'auto'
-        });
-        
-        console.log('Cloudinary upload result:', result);
-        postData.image = result.secure_url;
+        // Upload to Cloudinary using the helper function
+        const imageUrl = await uploadToCloudinary(req.file);
+        console.log('Cloudinary upload successful, URL:', imageUrl);
+        postData.image = imageUrl;
       } catch (error) {
         console.error('Error processing uploaded image:', error);
         return res.status(400).json({

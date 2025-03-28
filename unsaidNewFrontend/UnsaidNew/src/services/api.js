@@ -1,5 +1,5 @@
-// const API_BASE_URL = 'http://localhost:3000/api';
-const API_BASE_URL = 'https://unsaid-backend.vercel.app/api';
+const API_BASE_URL = 'http://localhost:3000/api';
+// const API_BASE_URL = 'https://unsaid-backend.vercel.app/api';
 export { API_BASE_URL };
 
 // Helper function to get auth headers
@@ -514,10 +514,16 @@ export const updatePostSpicyLevel = async (postId, spicyLevel) => {
 // Check authentication status
 export const checkAuth = async () => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       headers: getAuthHeaders(),
       credentials: 'include',
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (response.ok) {
       return await response.json();
@@ -535,6 +541,18 @@ export const checkAuth = async () => {
     return { status: 'error', message: 'Not authenticated' };
   } catch (error) {
     console.error('Auth check error:', error);
+    
+    // Handle timeout specifically
+    if (error.name === 'AbortError') {
+      console.log('Auth check timed out, assuming user is not authenticated');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
+      return { status: 'error', message: 'Request timed out' };
+    }
+    
     return { status: 'error', message: error.message };
   }
 };

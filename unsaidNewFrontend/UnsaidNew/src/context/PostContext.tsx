@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { Post, Comment } from "@/utils/types";
 import { toast } from "@/hooks/use-toast";
 import * as api from '@/services/api';
+import { useAuth } from "@/context/AuthContext";
 
 interface PostContextType {
   posts: Post[];
@@ -33,10 +34,18 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (isAuthenticated) {
+      fetchPosts();
+    } else {
+      // Clear posts when user logs out
+      setPosts([]);
+      setCurrentPage(1);
+      setTotalPages(1);
+    }
+  }, [isAuthenticated]);
 
   const fetchPosts = async (page = 1) => {
     try {

@@ -1,4 +1,4 @@
-import fileUpload from 'express-fileupload';
+import multer from 'multer';
 import cloudinary from 'cloudinary';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -13,20 +13,41 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Configure express-fileupload
-const upload = fileUpload({
-  useTempFiles: true,
-  tempFileDir: '/tmp/',
+// Configure multer with memory storage
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  abortOnLimit: true,
-  createParentPath: true,
-  debug: true,
-  safeFileNames: true,
-  preserveExtension: true,
-  parseNested: true,
-  uploadTimeout: 60000, // 60 seconds
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
 });
+
+// Helper function to upload file to Cloudinary
+export const uploadToCloudinary = async (file) => {
+  try {
+    // Convert buffer to base64
+    const b64 = Buffer.from(file.buffer).toString('base64');
+    const dataURI = `data:${file.mimetype};base64,${b64}`;
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: 'unsaid_uploads',
+      resource_type: 'auto'
+    });
+    
+    return result.secure_url;
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    throw error;
+  }
+};
 
 export { upload }; 

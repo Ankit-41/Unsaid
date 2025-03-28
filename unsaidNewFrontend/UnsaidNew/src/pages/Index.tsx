@@ -4,6 +4,7 @@ import Container from "@/components/layout/Container";
 import Post from "@/components/Post";
 import CreatePostModal from "@/components/CreatePostModal";
 import { usePostContext } from "@/context/PostContext";
+import { useAuth } from "@/context/AuthContext";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -11,21 +12,19 @@ import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const { posts, loading, fetchMorePosts, currentPage, totalPages } = usePostContext();
+  const { isAuthenticated } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
   const loader = useRef(null);
   const navigate = useNavigate();
 
-  // Simulate checking if user is logged in
-  const isLoggedIn = true; // Would typically come from auth context
-
   useEffect(() => {
     // Redirect to login page if not logged in
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       navigate("/auth");
     }
-  }, [isLoggedIn, navigate]);
+  }, [isAuthenticated, navigate]);
 
   // Handle intersection with the loader element
   const handleObserver = useCallback((entries) => {

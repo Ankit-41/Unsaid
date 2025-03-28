@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    match: [/.*@iitr\.ac\.in$/, 'Please provide a valid IITR email address']
+    match: [/.*@(.*\.)?iitr\.ac\.in$/, 'Please provide a valid IITR email address']
   },
   password: {
     type: String,

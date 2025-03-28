@@ -1,5 +1,7 @@
 import Post from '../models/Post.js';
+import cloudinary from '../config/cloudinary.js';
 
+// Export all controller functions
 
 
 // In postController.js
@@ -43,14 +45,83 @@ export const searchPosts = async (req, res) => {
 // Create a new post
 export const createPost = async (req, res) => {
   try {
-    const { content, isAnonymous } = req.body;
+    console.log('Create post request received:');
+    console.log('Content Type:', req.headers['content-type']);
+    console.log('Body:', req.body);
+    console.log('Files:', req.files);
     
-    const post = await Post.create({
-      content,
+    // Get the content from request body
+    const { content } = req.body;
+    
+    if (!content || content.trim() === '') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Post content is required'
+      });
+    }
+    
+    // Determine if request is JSON or FormData
+    const isJSONRequest = req.headers['content-type']?.includes('application/json');
+    
+    // If JSON, use the values directly (they'll be correctly typed)
+    // If FormData, parse the values
+    let isAnonymous, spicyLevel;
+    
+    if (isJSONRequest) {
+      // For JSON, the values already have proper types
+      isAnonymous = req.body.isAnonymous === true;
+      spicyLevel = Number(req.body.spicyLevel) || 1;
+    } else {
+      // For FormData, convert string to appropriate types
+      const isAnonymousValue = req.body.isAnonymous;
+      const spicyLevelValue = req.body.spicyLevel;
+      
+      isAnonymous = isAnonymousValue === 'true' || isAnonymousValue === true;
+      spicyLevel = parseInt(spicyLevelValue) || 1;
+    }
+    
+    console.log('Parsed values:', { isAnonymous, spicyLevel });
+    
+    // Initialize post data
+    const postData = {
+      content: content.trim(),
       author: req.user._id,
-      isAnonymous: isAnonymous || false,
+      isAnonymous,
+      spicyLevel,
       status: 'pending' // All posts start as pending
-    });
+    };
+    
+    // Handle image if uploaded
+    if (req.files && req.files.image) {
+      try {
+        const image = req.files.image;
+        console.log('Image uploaded:', {
+          name: image.name,
+          size: image.size,
+          tempFilePath: image.tempFilePath
+        });
+        
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(image.tempFilePath, {
+          folder: 'unsaid_uploads',
+          resource_type: 'auto'
+        });
+        
+        console.log('Cloudinary upload result:', result);
+        postData.image = result.secure_url;
+      } catch (error) {
+        console.error('Error processing uploaded image:', error);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Error processing uploaded image',
+          error: error.message
+        });
+      }
+    }
+    
+    console.log('Creating post with data:', postData);
+    const post = await Post.create(postData);
+    console.log('Post created successfully:', post._id);
     
     res.status(201).json({
       status: 'success',
@@ -60,6 +131,22 @@ export const createPost = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error creating post:', error);
+    
+    // Enhanced error handling for validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.keys(error.errors).map(field => ({
+        path: field,
+        message: error.errors[field].message
+      }));
+      
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        errors
+      });
+    }
+    
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -81,16 +168,72 @@ export const getAllPosts = async (req, res) => {
       .populate('author', 'name')
       .populate('comments.user', 'name');
 
+    console.log(`Admin fetched ${posts.length} posts`);
+
+    // Process posts to format comments with likes and replies
+    const userId = req.user._id.toString();
+    
+    const processedPosts = posts.map(post => {
+      const postObj = post.toObject();
+      
+      console.log(`Processing post ${postObj._id} with ${postObj.comments.length} comments for admin view`);
+      
+      // Process comments to add isLiked status and structure replies
+      const allComments = postObj.comments.map(comment => {
+        // Ensure likes is always an array
+        if (!comment.likes) {
+          comment.likes = [];
+        }
+        
+        return {
+          ...comment,
+          isLiked: comment.likes.some(likeId => likeId.toString() === userId)
+        };
+      });
+      
+      // Separate into top-level comments and replies
+      const topLevelComments = allComments.filter(comment => !comment.parentId);
+      const replies = allComments.filter(comment => comment.parentId);
+      
+      // Add replies to their parent comments
+      const commentsWithReplies = topLevelComments.map(comment => {
+        const commentReplies = replies.filter(
+          reply => reply.parentId && reply.parentId.toString() === comment._id.toString()
+        );
+        return {
+          ...comment,
+          replies: commentReplies || []
+        };
+      });
+      
+      // Update the post object with structured comments
+      postObj.comments = commentsWithReplies;
+      
+      // Ensure spicyLevel exists for backward compatibility
+      if (postObj.spicyLevel === undefined) {
+        // Calculate spicy level based on content length for existing posts
+        const contentLength = postObj.content.length;
+        if (contentLength > 400) postObj.spicyLevel = 5;
+        else if (contentLength > 300) postObj.spicyLevel = 4;
+        else if (contentLength > 200) postObj.spicyLevel = 3;
+        else if (contentLength > 100) postObj.spicyLevel = 2;
+        else postObj.spicyLevel = 1;
+      }
+      
+      return postObj;
+    });
+
     const total = await Post.countDocuments({});
 
     res.status(200).json({
       status: 'success',
-      results: posts.length,
+      results: processedPosts.length,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      data: { posts }
+      data: { posts: processedPosts }
     });
   } catch (error) {
+    console.error('Error fetching all posts for admin:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -105,6 +248,7 @@ export const getApprovedPosts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     
+    // Fetch posts with populated comments
     const posts = await Post.find({ status: 'approved' })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -117,12 +261,73 @@ export const getApprovedPosts = async (req, res) => {
       })
       .populate('comments.user', 'name');
     
-    // Process posts to handle anonymous authors
+    // Log post IDs and their comments to help with debugging
+    console.log(`Fetched ${posts.length} approved posts`);
+    
+    // Process posts to handle anonymous authors, comment likes and replies
+    const userId = req.user._id.toString();
+    
     const processedPosts = posts.map(post => {
       const postObj = post.toObject();
+      
+      // Handle anonymous posts
       if (postObj.isAnonymous) {
         postObj.author = { name: 'Anonymous' };
       }
+      
+      // Debug log for this post's comment count
+      console.log(`Post ${postObj._id}: ${postObj.comments.length} comments`);
+      
+      // Process comments to add isLiked status and structure replies
+      const allComments = postObj.comments.map(comment => {
+        // Debug log for comment IDs
+        console.log(`Comment ${comment._id} - Parent ID: ${comment.parentId || 'None'}`);
+        
+        // Ensure likes is always an array
+        if (!comment.likes) {
+          comment.likes = [];
+        }
+        
+        return {
+          ...comment,
+          isLiked: comment.likes.some(likeId => likeId.toString() === userId)
+        };
+      });
+      
+      // Separate into top-level comments and replies
+      const topLevelComments = allComments.filter(comment => !comment.parentId);
+      const replies = allComments.filter(comment => comment.parentId);
+      
+      console.log(`Post ${postObj._id}: ${topLevelComments.length} top-level comments, ${replies.length} replies`);
+      
+      // Add replies to their parent comments
+      const commentsWithReplies = topLevelComments.map(comment => {
+        const commentReplies = replies.filter(
+          reply => reply.parentId && reply.parentId.toString() === comment._id.toString()
+        );
+        
+        console.log(`Comment ${comment._id}: ${commentReplies.length} replies`);
+        
+        return {
+          ...comment,
+          replies: commentReplies || []
+        };
+      });
+      
+      // Update the post object with structured comments
+      postObj.comments = commentsWithReplies;
+      
+      // Ensure spicyLevel exists for backward compatibility
+      if (postObj.spicyLevel === undefined) {
+        // Calculate spicy level based on content length for existing posts
+        const contentLength = postObj.content.length;
+        if (contentLength > 400) postObj.spicyLevel = 5;
+        else if (contentLength > 300) postObj.spicyLevel = 4;
+        else if (contentLength > 200) postObj.spicyLevel = 3;
+        else if (contentLength > 100) postObj.spicyLevel = 2;
+        else postObj.spicyLevel = 1;
+      }
+      
       return postObj;
     });
     
@@ -138,6 +343,7 @@ export const getApprovedPosts = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error fetching approved posts:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -208,13 +414,61 @@ export const getPost = async (req, res) => {
       });
     }
     
+    // Format post to include comment likes and structure comment replies
+    const postObj = post.toObject();
+    
+    // Map through comments to add isLiked status and properly format replies
+    const userId = req.user._id.toString();
+    
+    console.log(`Processing post ${postObj._id} with ${postObj.comments.length} comments`);
+    
+    // First, prepare all comments with isLiked status
+    const allComments = postObj.comments.map(comment => {
+      // Debugging info
+      console.log(`Processing comment ${comment._id}, parentId: ${comment.parentId || 'None'}, likes: ${comment.likes ? comment.likes.length : 0}`);
+      
+      // Ensure likes is always an array
+      if (!comment.likes) {
+        comment.likes = [];
+      }
+      
+      return {
+        ...comment,
+        isLiked: comment.likes.some(likeId => likeId.toString() === userId)
+      };
+    });
+    
+    // Separate into top-level comments and replies
+    const topLevelComments = allComments.filter(comment => !comment.parentId);
+    const replies = allComments.filter(comment => comment.parentId);
+    
+    console.log(`Post has ${topLevelComments.length} top-level comments and ${replies.length} replies`);
+    
+    // Add replies to their parent comments
+    const commentsWithReplies = topLevelComments.map(comment => {
+      const commentReplies = replies.filter(
+        reply => reply.parentId && reply.parentId.toString() === comment._id.toString()
+      );
+      
+      console.log(`Comment ${comment._id} has ${commentReplies.length} replies`);
+      
+      return {
+        ...comment,
+        replies: commentReplies || []
+      };
+    });
+    
+    // Update the post object with structured comments
+    postObj.comments = commentsWithReplies;
+    
     res.status(200).json({
       status: 'success',
       data: {
-        post
+        post: postObj
       }
     });
   } catch (error) {
+    console.error('Error getting post:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -410,6 +664,194 @@ export const addComment = async (req, res) => {
   }
 };
 
+// Add a reply to a comment
+export const addCommentReply = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const { id: postId, commentId } = req.params;
+    
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Post not found'
+      });
+    }
+    
+    // Check if post is approved
+    if (post.status !== 'approved') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You can only comment on approved posts'
+      });
+    }
+    
+    // Find the parent comment - more reliable way to find the comment
+    const parentComment = post.comments.find(
+      comment => comment._id.toString() === commentId
+    );
+    
+    if (!parentComment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Comment not found'
+      });
+    }
+    
+    // Add reply as a new comment with parentId reference
+    const reply = {
+      user: req.user._id,
+      text,
+      parentId: parentComment._id // Use the actual ObjectId
+    };
+    
+    post.comments.push(reply);
+    await post.save();
+    
+    // Populate user info in the new reply
+    const populatedPost = await Post.findById(post._id)
+      .populate('comments.user', 'name');
+    
+    const newReply = populatedPost.comments[populatedPost.comments.length - 1];
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'Reply added successfully',
+      data: {
+        reply: newReply
+      }
+    });
+  } catch (error) {
+    console.error('Error adding reply:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Like a comment
+export const likeComment = async (req, res) => {
+  try {
+    const { id: postId, commentId } = req.params;
+    const userId = req.user._id;
+    
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Post not found'
+      });
+    }
+    
+    // Find the comment to like using a more reliable method
+    const comment = post.comments.find(
+      comment => comment._id.toString() === commentId
+    );
+    
+    if (!comment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Comment not found'
+      });
+    }
+    
+    // Check if user already liked this comment
+    if (comment.likes && comment.likes.some(id => id.toString() === userId.toString())) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'You already liked this comment'
+      });
+    }
+    
+    // Initialize likes array if it doesn't exist
+    if (!comment.likes) {
+      comment.likes = [];
+    }
+    
+    // Add user to likes
+    comment.likes.push(userId);
+    await post.save();
+    
+    // Log successful like operation
+    console.log(`User ${userId} liked comment ${commentId} on post ${postId}`);
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Comment liked successfully',
+      data: {
+        likes: comment.likes.length
+      }
+    });
+  } catch (error) {
+    console.error('Error liking comment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Unlike a comment
+export const unlikeComment = async (req, res) => {
+  try {
+    const { id: postId, commentId } = req.params;
+    const userId = req.user._id;
+    
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Post not found'
+      });
+    }
+    
+    // Find the comment to unlike using a more reliable method
+    const comment = post.comments.find(
+      comment => comment._id.toString() === commentId
+    );
+    
+    if (!comment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Comment not found'
+      });
+    }
+    
+    // Check if user hasn't liked this comment
+    if (!comment.likes || !comment.likes.some(id => id.toString() === userId.toString())) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'You have not liked this comment'
+      });
+    }
+    
+    // Remove user from likes
+    comment.likes = comment.likes.filter(id => id.toString() !== userId.toString());
+    await post.save();
+    
+    // Log successful unlike operation
+    console.log(`User ${userId} unliked comment ${commentId} on post ${postId}`);
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Comment unliked successfully',
+      data: {
+        likes: comment.likes.length
+      }
+    });
+  } catch (error) {
+    console.error('Error unliking comment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
 // Get user's own posts
 export const getMyPosts = async (req, res) => {
   try {
@@ -422,15 +864,31 @@ export const getMyPosts = async (req, res) => {
       .skip(skip)
       .limit(limit);
     
+    // Process posts to ensure spicyLevel exists for all posts
+    const processedPosts = posts.map(post => {
+      const postObj = post.toObject();
+      // Ensure spicyLevel exists for backward compatibility
+      if (postObj.spicyLevel === undefined) {
+        // Calculate spicy level based on content length for existing posts
+        const contentLength = postObj.content.length;
+        if (contentLength > 400) postObj.spicyLevel = 5;
+        else if (contentLength > 300) postObj.spicyLevel = 4;
+        else if (contentLength > 200) postObj.spicyLevel = 3;
+        else if (contentLength > 100) postObj.spicyLevel = 2;
+        else postObj.spicyLevel = 1;
+      }
+      return postObj;
+    });
+    
     const total = await Post.countDocuments({ author: req.user._id });
     
     res.status(200).json({
       status: 'success',
-      results: posts.length,
+      results: processedPosts.length,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
       data: {
-        posts
+        posts: processedPosts
       }
     });
   } catch (error) {

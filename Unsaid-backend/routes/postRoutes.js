@@ -8,13 +8,22 @@ import {
   likePost,
   unlikePost,
   addComment,
+  addCommentReply,
+  likeComment,
+  unlikeComment,
   getMyPosts,
   searchPosts,
-  getAllPosts  // NEW: import getAllPosts
+  getAllPosts
 } from '../controllers/postController.js';
 import { validate } from '../middleware/validation.js';
-import { postSchema, commentSchema, postStatusSchema } from '../middleware/validation.js';
+import { 
+  postSchema, 
+  commentSchema, 
+  commentReplySchema,
+  postStatusSchema 
+} from '../middleware/validation.js';
 import { protect, restrictTo, isVerified } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -37,9 +46,21 @@ router.get('/:id', getPost);
 
 // Routes that require email verification
 router.use(isVerified);
-router.post('/', validate(postSchema), createPost);
+
+// Update the create post route to use express-fileupload middleware
+router.post('/', 
+  upload, // Handle file upload
+  validate(postSchema), // Then validate
+  createPost
+);
+
 router.post('/:id/like', likePost);
 router.post('/:id/unlike', unlikePost);
 router.post('/:id/comments', validate(commentSchema), addComment);
+
+// New routes for comment replies and likes
+router.post('/:id/comments/:commentId/replies', validate(commentReplySchema), addCommentReply);
+router.post('/:id/comments/:commentId/like', likeComment);
+router.post('/:id/comments/:commentId/unlike', unlikeComment);
 
 export default router;

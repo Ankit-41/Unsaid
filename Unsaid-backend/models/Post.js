@@ -6,6 +6,10 @@ const postSchema = new mongoose.Schema({
     required: [true, 'A post must have content'],
     trim: true
   },
+  image: {
+    type: String,
+    default: null
+  },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -13,7 +17,25 @@ const postSchema = new mongoose.Schema({
   },
   isAnonymous: {
     type: Boolean,
-    default: false
+    default: false,
+    set: function(value) {
+      if (typeof value === 'string') {
+        return value === 'true';
+      }
+      return value;
+    }
+  },
+  spicyLevel: {
+    type: Number,
+    default: 1,
+    min: 1,
+    max: 5,
+    set: function(value) {
+      if (typeof value === 'string') {
+        return parseInt(value) || 1;
+      }
+      return value;
+    }
   },
   status: {
     type: String,
@@ -37,6 +59,16 @@ const postSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true
+      },
+      likes: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        }
+      ],
+      parentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        default: null
       },
       createdAt: {
         type: Date,

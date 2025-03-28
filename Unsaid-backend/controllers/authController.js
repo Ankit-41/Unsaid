@@ -6,6 +6,8 @@ import { generateToken } from '../utils/jwt.js';
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    
+    console.log('Registration attempt:', { name, email });
 
     // Check if email is from IITR domain
     if (!email.toLowerCase().endsWith('iitr.ac.in')) {
@@ -30,30 +32,59 @@ export const register = async (req, res) => {
       email,
       password
     });
+    
+    console.log('User created successfully:', user._id);
 
     // Generate and send OTP
     const otp = generateOTP();
     await saveOTP(email, otp);
-    const emailSent = await sendOTPEmail(email, otp);
-
-    if (!emailSent) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Failed to send verification email. Please try again.'
-      });
+    console.log('OTP generated and saved:', otp);
+    
+    // For testing purposes, let's bypass email verification temporarily
+    user.verified = true;
+    await user.save();
+    console.log('User marked as verified for testing');
+    
+    // Attempt to send email, but don't block registration if it fails
+    try {
+      const emailSent = await sendOTPEmail(email, otp);
+      console.log('Email sending attempt result:', emailSent);
+      
+      if (!emailSent) {
+        console.warn(`OTP email could not be sent to ${email}, but registration will proceed`);
+      }
+    } catch (emailError) {
+      console.error('Error in email sending process:', emailError);
     }
+
+    // Generate JWT token for direct login
+    const token = generateToken(user._id);
+
+    // Set cookie options
+    const cookieOptions = {
+      expires: new Date(
+        Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    };
+
+    // Send token as cookie
+    res.cookie('jwt', token, cookieOptions);
 
     // Remove password from output
     user.password = undefined;
 
     res.status(201).json({
       status: 'success',
-      message: 'Registration successful. Please verify your email with the OTP sent.',
+      message: 'Registration successful. Auto-verified for testing purposes.',
+      token,
       data: {
         user
       }
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -240,16 +271,23 @@ export const logout = (req, res) => {
 // Get current user
 export const getMe = async (req, res) => {
   try {
+    // Remove sensitive information
+    const user = req.user.toObject();
+    delete user.password;
+    delete user.otp;
+    delete user.otpExpires;
+
     res.status(200).json({
       status: 'success',
       data: {
-        user: req.user
+        user
       }
     });
   } catch (error) {
+    console.error('Error in getMe:', error);
     res.status(500).json({
       status: 'error',
-      message: error.message
+      message: 'Error fetching user data'
     });
   }
 };

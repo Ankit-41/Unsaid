@@ -189,7 +189,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, comments }) => 
         </ScrollArea>
       )}
 
-      <form onSubmit={handleSubmitComment} className="flex items-center gap-2 mt-3 relative">
+      <form onSubmit={handleSubmitComment} className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
         <div className="relative flex-1">
           <Input
             placeholder="Add a comment..."

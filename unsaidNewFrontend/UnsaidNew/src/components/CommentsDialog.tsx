@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Comment } from "@/utils/types";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { usePostContext } from "@/context/PostContext";
 import CommentSection from "./CommentSection";
 
 interface CommentsDialogProps {
@@ -19,10 +16,6 @@ const CommentsDialog: React.FC<CommentsDialogProps> = ({
   postId,
   comments,
 }) => {
-  const { addComment } = usePostContext();
-  const [commentText, setCommentText] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   useEffect(() => {
     // Debug the comments passed to the dialog
     if (isOpen) {
@@ -34,21 +27,6 @@ const CommentsDialog: React.FC<CommentsDialogProps> = ({
       });
     }
   }, [isOpen, comments]);
-
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      await addComment(postId, commentText);
-      setCommentText("");
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -66,27 +44,6 @@ const CommentsDialog: React.FC<CommentsDialogProps> = ({
             <CommentSection comments={comments} postId={postId} />
           )}
         </div>
-        
-        <form 
-          onSubmit={handleSubmitComment} 
-          className="mt-4 flex items-center gap-2 border-t border-border/50 pt-4"
-        >
-          <Input
-            placeholder="Add a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1"
-            disabled={isSubmitting}
-            autoFocus={false}
-          />
-          <Button 
-            type="submit"
-            size="sm"
-            disabled={!commentText.trim() || isSubmitting}
-          >
-            {isSubmitting ? "..." : "Post"}
-          </Button>
-        </form>
       </DialogContent>
     </Dialog>
   );

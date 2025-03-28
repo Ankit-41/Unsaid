@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import { authAPI } from "../../services/api"
 import toast from "react-hot-toast"
-import { FaEnvelope, FaLock, FaSignInAlt, FaSpinner, FaFire } from "react-icons/fa"
+import { FaEnvelope, FaLock, FaSignInAlt, FaSpinner, FaEye, FaEyeSlash } from "react-icons/fa"
 
 // Add this to your global CSS or component
 const loginFormStyles = `
@@ -21,6 +22,122 @@ const loginFormStyles = `
 .spicy-gradient {
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
+
+.login-form {
+  width: 100%;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.form-input {
+  background-color: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  color: white;
+  width: 100%;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #b71c1c;
+  box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.25);
+}
+
+.form-input::placeholder {
+  color: rgba(156, 163, 175, 0.7);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(209, 213, 219, 0.9);
+  margin-bottom: 0.375rem;
+}
+
+.form-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ef4444;
+  font-size: 1rem;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.submit-button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 14px rgba(255, 61, 0, 0.3);
+}
+
+.submit-button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.form-card {
+  transition: all 0.3s ease;
+}
+
+.form-link {
+  position: relative;
+  display: inline-block;
+}
+
+.form-link::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: #ff3d00;
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease;
+}
+
+.form-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .form-input {
+    padding: 0.7rem 0.7rem 0.7rem 2.25rem;
+    font-size: 0.9rem;
+  }
+  
+  .form-icon {
+    font-size: 0.9rem;
+  }
+  
+  .submit-button {
+    padding: 0.7rem;
+    font-size: 0.9rem;
+  }
+}
 `
 
 function LoginForm() {
@@ -28,12 +145,17 @@ function LoginForm() {
     email: "",
     password: "",
   })
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
+  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
   }
 
   const handleSubmit = async (e) => {
@@ -61,101 +183,82 @@ function LoginForm() {
   return (
     <>
       <style>{loginFormStyles}</style>
-      <div className="bg-gray-900 rounded-xl shadow-xl overflow-hidden w-full mx-auto transform transition-all hover:shadow-2xl border border-gray-800">
-        <div className="spicy-gradient p-6">
-          <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center">
-            <FaFire className="mr-2" /> Light Your Fire
-          </h2>
-          <p className="text-red-100 text-center mt-2">Sign in to spill and sip the tea</p>
-        </div>
-
-        <div className="p-6 sm:p-8 bg-gray-900">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaEnvelope className="text-red-500" />
-                </div>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email"
-                  required
-                  className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaLock className="text-red-500" />
-                </div>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  required
-                  className="pl-10 w-full px-6 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-700 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
-                  Remember me
+      <div className="login-form">
+        <div className="bg-gray-900 rounded-xl shadow-xl overflow-hidden">
+          <div className="p-5 bg-gray-900">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="form-label">
+                  Email Address
                 </label>
+                <div className="relative">
+                  <FaEnvelope className="form-icon" />
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    required
+                    className="form-input"
+                  />
+                </div>
               </div>
-              <a href="#" className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors">
-                Forgot password?
-              </a>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white spicy-gradient hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-70 heat-pulse"
-            >
-              {loading ? (
-                <>
-                  <FaSpinner className="animate-spin mr-2" />
-                  Heating up...
-                </>
-              ) : (
-                <>
-                  <FaSignInAlt className="mr-2" />
-                  Bring the Heat
-                </>
-              )}
-            </button>
-          </form>
+              <div>
+                <label htmlFor="password" className="form-label">
+                  Password
+                </label>
+                <div className="relative">
+                  <FaLock className="form-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                    required
+                    className="form-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 focus:outline-none"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
-              Don't have an account?{" "}
-              <a href="/register" className="font-medium text-red-400 hover:text-red-300 transition-colors">
-                Get spicy now
-              </a>
-            </p>
+              <div className="flex items-center justify-end">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-xs font-medium text-red-400 hover:text-red-300 transition-colors form-link"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="submit-button spicy-gradient text-white heat-pulse mt-2"
+              >
+                {loading ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" />
+                    Heating up...
+                  </>
+                ) : (
+                  <>
+                    <FaSignInAlt className="mr-2" />
+                    Bring the Heat
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -164,4 +267,3 @@ function LoginForm() {
 }
 
 export default LoginForm
-

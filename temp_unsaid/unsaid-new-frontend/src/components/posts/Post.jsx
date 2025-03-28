@@ -1,146 +1,82 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FaHeart, FaRegHeart, FaComment, FaShare, FaTimes, FaPaperPlane, FaPepperHot, FaFire } from "react-icons/fa"
-import { postsAPI } from "../../services/api"
-import toast from "react-hot-toast"
+import { Heart, MessageCircle, Share, Send, ChefHat, Flame, User } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-// Add this to your global CSS or component
-const postStyles = `
-@keyframes heatPulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(255, 61, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0); }
-}
+// Global Styles for Custom Scrollbar
+const globalStyles = `
+  /* Custom Scrollbar Styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
 
-.heat-pulse {
-  animation: heatPulse 2s infinite;
-}
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+  .scrollbar-track-gray-800::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 0.5rem;
+  }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
+  .scrollbar-thumb-gray-700::-webkit-scrollbar-thumb {
+    background-color: rgba(55, 65, 81, 0.7);
+    border-radius: 0.5rem;
+    transition: background-color 0.3s ease;
+  }
 
-@keyframes spicyShake {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(1deg); }
-  50% { transform: rotate(0deg); }
-  75% { transform: rotate(-1deg); }
-  100% { transform: rotate(0deg); }
-}
-
-.spicy-shake:hover {
-  animation: spicyShake 0.5s ease-in-out;
-}
-
-.spicy-gradient {
-  background: linear-gradient(135deg, #b71c1c, #ff3d00);
-}
-
-.spicy-bg {
-  // background-color: #1a1a1a;
-  // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
-}
+  .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 85, 99, 0.8);
+  }
 `
 
-function Post({ post, isActive }) {
-  // Set initial liked state based on an already-liked error flag
+function Post({ post, isActive = true }) {
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
-  const [alreadyLikedError, setAlreadyLikedError] = useState(false)
   const [showCommentModal, setShowCommentModal] = useState(false)
   const [commentText, setCommentText] = useState("")
-  const [comments, setComments] = useState(post.comments || [])
-  const [spicyLevel, setSpicyLevel] = useState(0)
+  const [comments, setComments] = useState(post?.comments || [])
+  const [spicyLevel, setSpicyLevel] = useState(post?.spicyLevel || 1)
 
   useEffect(() => {
-    // Set the correct like count when post changes
-    setLikeCount(Array.isArray(post.likes) ? post.likes.length : 0)
+    // Add global styles to the document
+    const styleTag = document.createElement("style")
+    styleTag.textContent = globalStyles
+    document.head.appendChild(styleTag)
 
-    // Calculate spicy level based on content length or engagement
-    const contentLength = post.content.length
-    let level = 1
-    if (contentLength > 400) level = 5
-    else if (contentLength > 300) level = 4
-    else if (contentLength > 200) level = 3
-    else if (contentLength > 100) level = 2
-    setSpicyLevel(level)
+    // Initialize like count and spicy level
+    setLikeCount(Array.isArray(post?.likes) ? post.likes.length : 0)
+    if (post?.spicyLevel) setSpicyLevel(post.spicyLevel)
 
+    // Check if current user has liked the post
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
-    if (currentUser && currentUser._id) {
-      const userHasLiked =
-        Array.isArray(post.likes) &&
-        post.likes.some((like) => {
-          if (typeof like === "string") {
-            return String(like) === String(currentUser._id)
-          } else if (like && typeof like === "object" && like._id) {
-            return String(like._id) === String(currentUser._id)
-          }
-          return false
-        })
+    if (currentUser && currentUser._id && Array.isArray(post?.likes)) {
+      const userHasLiked = post.likes.some((like) => {
+        if (typeof like === "string") return String(like) === String(currentUser._id)
+        if (like && typeof like === "object" && like._id) return String(like._id) === String(currentUser._id)
+        return false
+      })
       setLiked(userHasLiked)
     }
   }, [post])
 
   const toggleLike = async () => {
     try {
-      if (!liked && !alreadyLikedError) {
-        // Like the post
-        const response = await postsAPI.likePost(post._id)
-
-        // Handle success
-        toast.success("You're feeling the heat! 🔥", {
-          icon: "🌶️",
-          style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
-        })
+      if (!liked) {
         setLiked(true)
         setLikeCount((prev) => prev + 1)
       } else {
-        // Unlike the post
-        const response = await postsAPI.unlikePost(post._id)
-
-        // Update state
         setLiked(false)
-        setAlreadyLikedError(false)
         setLikeCount((prev) => Math.max(0, prev - 1))
-        toast.success("Cooled down a bit!", {
-          icon: "❄️",
-          style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
-        })
       }
     } catch (error) {
-      console.error(`Error toggling like:`, error)
-
-      // If it's an "already liked" error, use this to our advantage
-      if (error.response?.data?.message?.includes("already liked")) {
-        toast.error(error.response.data.message, {
-          icon: "🔥",
-          style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
-        })
-        setLiked(true)
-        setAlreadyLikedError(true)
-      } else {
-        toast.error(error.response?.data?.message || "Failed to update like. Please try again.", {
-          icon: "💔",
-          style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
-        })
-      }
+      console.error("Error toggling like:", error)
     }
-  }
-
-  const openComments = () => {
-    if (isActive) {
-      setShowCommentModal(true)
-    }
-  }
-
-  const closeComments = () => {
-    setShowCommentModal(false)
   }
 
   const handleCommentSubmit = async (e) => {
@@ -148,175 +84,193 @@ function Post({ post, isActive }) {
     if (!commentText.trim()) return
 
     try {
-      const response = await postsAPI.addComment(post._id, { text: commentText })
-      const newComment = response.data.data.comment
+      const newComment = {
+        _id: Date.now().toString(),
+        text: commentText,
+        user: { name: "Current User" },
+        createdAt: new Date().toISOString(),
+      }
       setComments([...comments, newComment])
       setCommentText("")
-      toast.success("Your spicy comment has been added! 🌶️", {
-        icon: "🔥",
-        style: { background: "#333", color: "#fff", border: "1px solid #4caf50" },
-      })
     } catch (error) {
       console.error("Error adding comment:", error)
-      toast.error(error.response?.data?.message || "Failed to add comment. Please try again.", {
-        icon: "💔",
-        style: { background: "#333", color: "#fff", border: "1px solid #ff3d00" },
-      })
     }
   }
 
   return (
-    <>
-      <style>{postStyles}</style>
-      <div className="flex flex-col h-full spicy-bg relative">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-800 bg-gray-900 shadow-md">
-          <div className="flex items-center">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center spicy-gradient text-white mr-4 shadow-md">
-              {post.isAnonymous ? <FaFire className="text-white" /> : post.author.name.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h6 className="text-lg font-semibold text-white flex items-center">
-                {post.isAnonymous ? "Anonymous" : post.author.name}
-                {post.isAnonymous && (
-                  <span className="ml-2 text-xs bg-red-900/50 text-red-400 px-2 py-1 rounded-full">
-                    Incognito Gossiper
-                  </span>
-                )}
-              </h6>
-              <small className="text-gray-400">{new Date(post.createdAt).toLocaleString()}</small>
-            </div>
-
-            {/* Spicy Level Indicator */}
-            <div className="ml-auto flex items-center">
-              <span className="text-gray-400 text-sm mr-2">Spicy:</span>
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <FaPepperHot
-                    key={i}
-                    className={`${i < spicyLevel ? "text-red-500" : "text-gray-600"} ${
-                      i === spicyLevel - 1 ? "heat-pulse" : ""
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Post Content */}
-        <div className="flex-grow p-8 flex items-center justify-center overflow-auto">
-          <div className="text-3xl md:text-4xl text-center font-medium text-white max-w-2xl mx-auto px-4 spicy-shake">
-            {post.content}
-          </div>
-        </div>
-
-        {/* Interactive Controls – visible only if active */}
-        <div
-          className={`p-3 mb-20 pt-3 pb-3 border-t border-gray-800 bg-gray-900 shadow-md transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0"}`}
-        >
-          <div className="flex justify-between items-center max-w-md mx-auto">
-            <button
-              className="flex items-center space-x-2 py-2 px-4 rounded-full transition-colors hover:bg-red-900/30"
-              onClick={toggleLike}
-              disabled={!isActive}
-            >
-              {/* Show red heart if liked OR if we got an "already liked" error */}
-              {liked ? (
-                <FaHeart className="text-xl text-red-500 heat-pulse" />
+    <div className="max-w-md mx-auto bg-gray-800 rounded-lg shadow-md overflow-hidden">
+      {/* Compact Header */}
+      <div className="px-3 py-2 flex justify-between items-center border-b border-gray-700 bg-gray-900">
+        <div className="flex items-center space-x-2">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src="/placeholder-user.jpg" />
+            <AvatarFallback>
+              {post?.isAnonymous ? (
+                <Flame className="text-white" size={18} />
               ) : (
-                <FaRegHeart className="text-xl text-gray-400" />
+                <User className="text-white" size={18} />
               )}
-
-              <span className="font-medium" style={{ color: liked || alreadyLikedError ? "#FF3D00" : "#9CA3AF" }}>
-                {likeCount}
-              </span>
-            </button>
-
-            <button
-              className="flex items-center space-x-2 py-2 px-4 rounded-full text-gray-400 hover:bg-red-900/30 transition-colors"
-              onClick={openComments}
-              disabled={!isActive}
-            >
-              <FaComment className="text-xl" />
-              <span className="font-medium">{comments.length}</span>
-            </button>
-
-            <button
-              className="flex items-center space-x-2 py-2 px-4 rounded-full text-gray-400 hover:bg-red-900/30 transition-colors"
-              disabled={!isActive}
-            >
-              <FaShare className="text-xl" />
-            </button>
+            </AvatarFallback>
+          </Avatar>
+          <div className="leading-tight">
+            <h6 className="text-white font-semibold">{post?.isAnonymous ? "Anonymous" : post?.author?.name}</h6>
+            <p className="text-gray-400 text-xs">
+              {post?.createdAt ? new Date(post.createdAt).toLocaleString() : "Just now"}
+            </p>
           </div>
         </div>
-
-        {/* Comment Modal Popup */}
-        {showCommentModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4">
-            <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden relative animate-fadeIn">
-              <div className="flex items-center justify-between p-5 border-b border-gray-800 spicy-gradient">
-                <h2 className="text-xl font-bold text-white flex items-center">
-                  <FaFire className="mr-2 text-yellow-400" />
-                  Spicy Comments
-                </h2>
-                <button
-                  onClick={closeComments}
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-white hover:bg-red-900/50 transition-colors"
-                >
-                  <FaTimes size={18} />
-                </button>
-              </div>
-
-              <div className="max-h-72 overflow-y-auto p-4 bg-gray-800">
-                {comments.length > 0 ? (
-                  comments.map((comment, index) => (
-                    <div key={index} className="p-3 mb-3 rounded-lg bg-gray-700 border border-gray-600">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center spicy-gradient text-white shadow-sm">
-                          {comment.user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h6 className="font-semibold text-white">{comment.user.name}</h6>
-                          <small className="text-gray-400">{new Date(comment.createdAt).toLocaleString()}</small>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 pl-12">{comment.text}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                    <FaPepperHot className="text-4xl mb-3 text-red-500 opacity-30" />
-                    <p>No spicy comments yet. Be the first to add some heat!</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 border-t border-gray-800 bg-gray-800">
-                <form onSubmit={handleCommentSubmit} className="flex">
-                  <input
-                    type="text"
-                    className="flex-grow p-3 border border-gray-700 rounded-l-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-gray-400"
-                    placeholder="Add your spicy take..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 spicy-gradient text-white rounded-r-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center"
-                    disabled={!commentText.trim()}
-                  >
-                    <FaPaperPlane />
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Spicy Meter */}
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <ChefHat
+              key={i}
+              size={i < spicyLevel ? 16 : 14}
+              className={`${i < spicyLevel ? "text-red-500" : "text-gray-600"} ${i === spicyLevel - 1 ? "animate-pulse" : ""
+                }`}
+            />
+          ))}
+        </div>
       </div>
-    </>
+
+      {/* Centered Post Content */}
+      <div className="px-4 py-6 flex items-center justify-center" style={{ minHeight: "120px" }}>
+        <p className="text-white text-base text-center leading-relaxed">
+          {post?.content || "This is a sample post content. Share your thoughts anonymously!"}
+        </p>
+      </div>
+
+      {/* Footer Controls */}
+      <div className="px-3 py-2 border-t border-gray-700 bg-gray-900 flex justify-start items-center space-x-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleLike}
+          disabled={!isActive}
+          className="flex items-center text-gray-400 hover:text-red-400"
+        >
+          <Heart className={`w-5 h-5 ${liked ? "fill-red-500" : ""}`} />
+          <span className="text-xs ml-1">{likeCount}</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowCommentModal(true)}
+          disabled={!isActive}
+          className="flex items-center text-gray-400 hover:text-blue-400"
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="text-xs ml-1">{comments.length}</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={!isActive}
+          className="flex items-center text-gray-400 hover:text-green-400"
+        >
+          <Share className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Comment Modal */}
+      <Dialog open={showCommentModal} onOpenChange={setShowCommentModal}>
+        <DialogContent
+         onOpenAutoFocus={(e) => e.preventDefault()}
+          className="bg-gray-900 text-white max-w-md rounded-lg 
+    border-0 outline-none ring-0 
+    [&>*]:border-none [&>*]:outline-none 
+    flex flex-col p-0 pt-3"
+          style={{
+            border: "none !important",
+            boxShadow: "0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -2px rgba(0,0,0,0.2)",
+            maxHeight: "50vh",
+            transform: "translateY(-25%)",
+
+          }}
+        >
+          <DialogHeader className="px-4 py-1 h-6">
+            <DialogTitle className="flex items-center text-sm font-semibold leading-tight m-0 p-0">
+              <Flame className="mr-2 text-red-500" size={14} />
+              <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+                Comments
+              </span>
+              <Badge variant="outline" className="ml-2 bg-gray-800 text-white border-gray-700">
+                {comments.length}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+
+          {/* Comment List with Custom Scrollbar - Takes available space */}
+          <div
+            className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 mb-14
+            custom-scrollbar scrollbar-thin scrollbar-track-gray-800 
+            scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-600"
+          >
+            {comments.length > 0 ? (
+              comments.map((comment, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-800/30 rounded-md p-2
+                  transition-colors duration-200 
+                  hover:bg-gray-800/50"
+                >
+                  <div className="flex items-start space-x-2">
+                    <Avatar className="h-6 w-6 flex-shrink-0">
+                      <AvatarFallback>
+                        {comment.user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between">
+                        <h6 className="font-semibold text-white text-xs truncate">{comment.user.name}</h6>
+                        <p className="text-gray-400 text-xs ml-1 whitespace-nowrap">
+                          {new Date(comment.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <p className="text-gray-300 text-xs mt-0.5 break-words">{comment.text}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <MessageCircle className="mx-auto mb-2 opacity-50" size={24} />
+                <p className="text-sm">No comments yet. Be the first!</p>
+              </div>
+            )}
+          </div>
+
+          {/* Fixed Comment Input at bottom */}
+          <div
+            className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 p-2.5 w-full"
+            style={{ maxWidth: "inherit", borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem" }}
+          >
+            <form onSubmit={handleCommentSubmit} className="flex">
+              <Input
+                className="flex-grow bg-gray-800 border-gray-700 text-white text-sm
+                focus-visible:ring-red-500 focus-visible:border-transparent"
+                placeholder="Add your spicy take..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                autoFocus
+              />
+              <Button
+                type="submit"
+                className="ml-2 bg-gradient-to-r from-red-600 to-orange-600 
+                hover:from-red-700 hover:to-orange-700"
+                disabled={!commentText.trim()}
+              >
+                <Send size={16} />
+              </Button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
 
 export default Post
-

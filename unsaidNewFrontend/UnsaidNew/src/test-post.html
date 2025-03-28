@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Post Creation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #response {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Post Creation</h1>
+  <form id="testForm">
+    <div class="form-group">
+      <label for="token">JWT Token:</label>
+      <input type="text" id="token" name="token" placeholder="Paste your JWT token here">
+    </div>
+    <div class="form-group">
+      <label for="content">Content:</label>
+      <textarea id="content" name="content" rows="4" placeholder="Enter post content"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="isAnonymous">Is Anonymous:</label>
+      <select id="isAnonymous" name="isAnonymous">
+        <option value="false">False</option>
+        <option value="true">True</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="spicyLevel">Spicy Level (1-5):</label>
+      <input type="number" id="spicyLevel" name="spicyLevel" min="1" max="5" value="3">
+    </div>
+    <button type="submit">Submit Post</button>
+  </form>
+
+  <div id="response"></div>
+
+  <script>
+    document.getElementById('testForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const token = document.getElementById('token').value;
+      const content = document.getElementById('content').value;
+      const isAnonymous = document.getElementById('isAnonymous').value;
+      const spicyLevel = document.getElementById('spicyLevel').value;
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append('content', content);
+      formData.append('isAnonymous', isAnonymous);
+      formData.append('spicyLevel', spicyLevel);
+      
+      // Log the form data
+      console.log('Form data:');
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+      
+      try {
+        const response = await fetch('http://localhost:3000/api/posts', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        // Display the response
+        document.getElementById('response').textContent = JSON.stringify(result, null, 2);
+        console.log('Response:', result);
+      } catch (error) {
+        document.getElementById('response').textContent = `Error: ${error.message}`;
+        console.error('Error:', error);
+      }
+    });
+  </script>
+</body>
+</html> 

@@ -1,45 +1,45 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-// import { postsAPI } from "../../services/api"
 import { postsAPI } from "../services/api"
-// import Post from "../posts/Post"
 import Post from "../components/posts/Post"
-// import ComposeButton from "../posts/ComposeButton"
 import ComposeButton from "../components/posts/ComposeButton"
-import { FaChevronUp, FaChevronDown, FaPepperHot, FaFire } from "react-icons/fa"
+import { FaChevronLeft, FaChevronRight, FaPepperHot, FaFire } from "react-icons/fa"
 import toast from "react-hot-toast"
 
-// Add this to your global CSS or component
 const postsPageStyles = `
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  /* Ensure posts container is centered and takes available viewport space minus navbar height */
+  .posts-wrapper {
+    max-width: 500px;
+    // margin: 60px auto 0; /* 60px top margin to account for the fixed navbar */
+    height: calc(100vh - 60px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-  }
-  
+
+  /* Each post container is absolutely centered so that only one is visible at a time */
   .post-container {
-    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
-    will-change: transform;
+    position: absolute;
+    width: 100%;
+    padding: 20px;
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease;
   }
-  
-  .post-container.active {
-    z-index: 10;
-  }
-  
-  .post-container.prev {
-    z-index: 5;
-  }
-  
-  .post-container.next {
-    z-index: 5;
-  }
-  
+
+  /* Navigation Buttons */
   .nav-button {
     transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 61, 0, 0.2);
   }
   
   .nav-button:hover:not(:disabled) {
@@ -50,7 +50,7 @@ const postsPageStyles = `
   .nav-button:active:not(:disabled) {
     transform: scale(0.95);
   }
-
+  
   @keyframes heatPulse {
     0% { box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
     70% { box-shadow: 0 0 0 10px rgba(255, 61, 0, 0); }
@@ -59,15 +59,6 @@ const postsPageStyles = `
   
   .heat-pulse {
     animation: heatPulse 2s infinite;
-  }
-
-  .spicy-bg {
-    // background-color: #1a1a1a;
-    // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
-  }
-
-  .spicy-gradient {
-    background: linear-gradient(135deg, #b71c1c, #ff3d00);
   }
 `
 
@@ -79,9 +70,12 @@ function PostsPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [scrollLocked, setScrollLocked] = useState(false)
+  const [touchStartX, setTouchStartX] = useState(0)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [swipeDirection, setSwipeDirection] = useState(null) // 'left' or 'right'
+  const [swiping, setSwiping] = useState(false)
 
   const containerRef = useRef(null)
-  const touchStartY = useRef(0)
   const lastScrollTime = useRef(0)
 
   // Fetch posts on mount
@@ -93,7 +87,6 @@ function PostsPage() {
     try {
       setLoading(true)
       const response = await postsAPI.getApprovedPosts(page)
-      // Extract posts from data and pagination from the top level
       const newPosts = response.data.data.posts
       const currentPage = response.data.currentPage
       const totalPages = response.data.totalPages
@@ -113,7 +106,7 @@ function PostsPage() {
     }
   }
 
-  // When user nears the end, automatically fetch more posts if available.
+  // Auto-fetch more posts when nearing the end
   useEffect(() => {
     if (posts.length > 0 && currentPostIndex >= posts.length - 2 && hasMore && !loading) {
       fetchPosts()
@@ -123,9 +116,9 @@ function PostsPage() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (scrollLocked) return
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      if (e.key === "ArrowLeft") {
         navigateToPrev()
-      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      } else if (e.key === "ArrowRight") {
         navigateToNext()
       }
     }
@@ -133,31 +126,7 @@ function PostsPage() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [currentPostIndex, posts.length, scrollLocked])
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const handleTouchStart = (e) => {
-      touchStartY.current = e.touches[0].clientY
-    }
-    const handleTouchMove = (e) => {
-      if (scrollLocked) return
-      const touchY = e.touches[0].clientY
-      const diff = touchStartY.current - touchY
-      const now = Date.now()
-      if (Math.abs(diff) > 70 && now - lastScrollTime.current > 700) {
-        diff > 0 ? navigateToNext() : navigateToPrev()
-        lastScrollTime.current = now
-      }
-    }
-    container.addEventListener("touchstart", handleTouchStart)
-    container.addEventListener("touchmove", handleTouchMove)
-    return () => {
-      container.removeEventListener("touchstart", handleTouchStart)
-      container.removeEventListener("touchmove", handleTouchMove)
-    }
-  }, [currentPostIndex, posts.length, scrollLocked])
-
+  // Mouse wheel horizontal scrolling
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -166,10 +135,12 @@ function PostsPage() {
       if (scrollLocked) return
       const now = Date.now()
       if (now - lastScrollTime.current > 700) {
-        if (e.deltaY > 70) {
+        if (e.deltaX > 70) {
+          setSwipeDirection("left")
           navigateToNext()
           lastScrollTime.current = now
-        } else if (e.deltaY < -70) {
+        } else if (e.deltaX < -70) {
+          setSwipeDirection("right")
           navigateToPrev()
           lastScrollTime.current = now
         }
@@ -181,23 +152,59 @@ function PostsPage() {
     }
   }, [currentPostIndex, posts.length, scrollLocked])
 
+  // Touch handlers for swiping
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX)
+    setSwiping(true)
+    setSwipeOffset(0)
+  }
+
+  const handleTouchMove = (e) => {
+    if (!swiping) return
+    const currentX = e.touches[0].clientX
+    const diff = touchStartX - currentX
+    setSwipeDirection(diff > 0 ? "left" : "right")
+    const maxSwipe = window.innerWidth * 0.4
+    setSwipeOffset(Math.max(Math.min(diff, maxSwipe), -maxSwipe))
+  }
+
+  const handleTouchEnd = (e) => {
+    setSwiping(false)
+    setSwipeOffset(0)
+    const endX = e.changedTouches[0].clientX
+    const diff = touchStartX - endX
+    const minSwipeDistance = 50
+    if (diff > minSwipeDistance) {
+      navigateToNext()
+    } else if (diff < -minSwipeDistance) {
+      navigateToPrev()
+    }
+  }
+
   const navigateToPrev = () => {
     if (currentPostIndex > 0 && !scrollLocked) {
       setScrollLocked(true)
+      setSwipeDirection("right")
       setCurrentPostIndex((prev) => prev - 1)
-      setTimeout(() => setScrollLocked(false), 700)
+      setTimeout(() => {
+        setScrollLocked(false)
+        setSwipeDirection(null)
+      }, 700)
     }
   }
 
   const navigateToNext = async () => {
     if (!scrollLocked) {
-      // If at the last post but more posts are available, fetch additional posts first.
       if (currentPostIndex >= posts.length - 1) {
         if (hasMore) {
           await fetchPosts()
           setScrollLocked(true)
+          setSwipeDirection("left")
           setCurrentPostIndex((prev) => prev + 1)
-          setTimeout(() => setScrollLocked(false), 700)
+          setTimeout(() => {
+            setScrollLocked(false)
+            setSwipeDirection(null)
+          }, 700)
         } else {
           toast.error("You've reached the end of the spicy gossip!", {
             icon: "🌶️",
@@ -206,32 +213,59 @@ function PostsPage() {
         }
       } else {
         setScrollLocked(true)
+        setSwipeDirection("left")
         setCurrentPostIndex((prev) => prev + 1)
-        setTimeout(() => setScrollLocked(false), 700)
+        setTimeout(() => {
+          setScrollLocked(false)
+          setSwipeDirection(null)
+        }, 700)
       }
     }
   }
 
-  const getPostClassName = (index) => {
-    if (index === currentPostIndex) return "post-container active"
-    if (index < currentPostIndex) return "post-container prev"
-    return "post-container next"
+  const getPostStyle = (index) => {
+    const offset = (index - currentPostIndex) * 100
+    let transform = `translateX(${offset}%)`
+    let opacity = 1
+
+    // Animate based on swipe and direction
+    if (swipeDirection && !swiping) {
+      if (swipeDirection === "left" && index === currentPostIndex - 1) {
+        transform = `translateX(-100%) rotate(-5deg)`
+        opacity = 0
+      } else if (swipeDirection === "right" && index === currentPostIndex + 1) {
+        transform = `translateX(100%) rotate(5deg)`
+        opacity = 0
+      }
+    }
+    if (swiping && index === currentPostIndex) {
+      transform = `translateX(${-swipeOffset}px) rotate(${-swipeOffset * 0.02}deg)`
+    }
+    return {
+      transform,
+      opacity,
+    }
   }
 
   if (loading && posts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen spicy-bg">
-        <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
-        <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
-        <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
+      <div className="relative bg-gray-900 min-h-screen">
+        <style>{postsPageStyles}</style>
+        <div className="h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-center">
+            <FaPepperHot className="animate-spin text-5xl mb-4 text-red-500" />
+            <p className="text-gray-300 font-medium">Heating up the spicy gossip...</p>
+            <div className="mt-4 text-sm text-gray-400">Preparing the hottest tea for you</div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error && posts.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen p-6 spicy-bg">
-        <div className="bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md max-w-md w-full">
+      <div className="flex items-center justify-center h-screen p-6 bg-gray-900">
+        <div className="bg-gray-800 border border-red-900 text-red-400 p-6 rounded-lg shadow-md max-w-sm w-full">
           <div className="flex items-center mb-4">
             <FaFire className="text-red-500 text-2xl mr-3" />
             <h3 className="text-lg font-semibold">Too Hot to Handle</h3>
@@ -239,7 +273,7 @@ function PostsPage() {
           <p className="mb-4">{error}</p>
           <button
             onClick={fetchPosts}
-            className="w-full px-4 py-2 spicy-gradient text-white rounded-md hover:opacity-90 transition flex items-center justify-center"
+            className="w-full px-4 py-2 bg-gradient-to-r from-red-700 to-red-500 text-white rounded-md hover:opacity-90 transition flex items-center justify-center"
           >
             <FaPepperHot className="mr-2" /> Try Again
           </button>
@@ -249,57 +283,51 @@ function PostsPage() {
   }
 
   return (
-    <div className="relative spicy-bg min-h-screen">
-      {/* Add the CSS */}
+    <div className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
       <style>{postsPageStyles}</style>
-
-      {/* Posts container */}
-      <div className="h-screen overflow-hidden spicy-bg" ref={containerRef} style={{ paddingTop: "60px" }}>
-        {posts.map((post, index) => (
-          <div
-            key={post._id}
-            className={getPostClassName(index)}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              transform: `translateY(${(index - currentPostIndex) * 100}%)`,
-              visibility: Math.abs(index - currentPostIndex) > 1 ? "hidden" : "visible",
-            }}
-          >
-            <Post post={post} isActive={index === currentPostIndex} />
+      <div
+        className="overflow-hidden"
+        ref={containerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="posts-wrapper">
+          {posts.map((post, index) => (
+            <div
+              key={post._id}
+              className="post-container"
+              style={getPostStyle(index)}
+            >
+              <Post post={post} isActive={index === currentPostIndex} />
+            </div>
+          ))}
+          {/* Navigation Controls */}
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30">
+            <button
+              onClick={navigateToPrev}
+              disabled={currentPostIndex === 0 || scrollLocked}
+              className="nav-button disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Previous post"
+            >
+              <FaChevronLeft className="text-red-500" />
+            </button>
           </div>
-        ))}
-
-        {/* Navigation Controls */}
-        <div className="fixed right-5 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3 z-30">
-          <button
-            onClick={navigateToPrev}
-            disabled={currentPostIndex === 0 || scrollLocked}
-            className="nav-button p-3 bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Previous post"
-          >
-            <FaChevronUp className="text-red-500" />
-          </button>
-          <button
-            onClick={navigateToNext}
-            // Disable only if scroll is locked or if there are no more posts available
-            disabled={scrollLocked || (!hasMore && currentPostIndex >= posts.length - 1)}
-            className="nav-button p-3 bg-gray-800 rounded-full shadow-lg hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed heat-pulse"
-            aria-label="Next post"
-          >
-            <FaChevronDown className="text-red-500" />
-          </button>
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30">
+            <button
+              onClick={navigateToNext}
+              disabled={scrollLocked || (!hasMore && currentPostIndex >= posts.length - 1)}
+              className="nav-button disabled:opacity-40 disabled:cursor-not-allowed heat-pulse"
+              aria-label="Next post"
+            >
+              <FaChevronRight className="text-red-500" />
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Floating Compose Button */}
       <ComposeButton />
     </div>
   )
 }
 
 export default PostsPage
-

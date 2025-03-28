@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FaPepperHot } from "react-icons/fa"
 import PostModal from "./PostModal"
 
@@ -30,6 +30,22 @@ const composeButtonStyles = `
 
 const ComposeButton = () => {
   const [showModal, setShowModal] = useState(false)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+
+  // Listen for comment modal state changes
+  useEffect(() => {
+    const handleCommentsModalChange = (event) => {
+      setIsCommentsOpen(event.detail.isOpen);
+    };
+
+    // Add event listener
+    document.addEventListener('commentsModalStateChange', handleCommentsModalChange);
+
+    // Clean up the event listener when component unmounts
+    return () => {
+      document.removeEventListener('commentsModalStateChange', handleCommentsModalChange);
+    };
+  }, []);
 
   const handleOpenModal = () => {
     setShowModal(true)
@@ -37,6 +53,11 @@ const ComposeButton = () => {
 
   const handleCloseModal = () => {
     setShowModal(false)
+  }
+
+  // If comments are open, don't show the compose button
+  if (isCommentsOpen) {
+    return null;
   }
 
   return (
@@ -47,10 +68,10 @@ const ComposeButton = () => {
         aria-label="Spill some hot gossip"
         className="fixed z-50 flex items-center justify-center spicy-pulse spicy-rotate"
         style={{
-          bottom: "115px",
-          right: "35px",
-          width: "80px",
-          height: "80px",
+          bottom: "70px",
+          right: "25px",
+          width: "70px",
+          height: "70px",
           borderRadius: "50%",
           background: "linear-gradient(135deg, #b71c1c, #ff3d00)",
           boxShadow: "0 4px 12px rgba(255, 61, 0, 0.3)",
@@ -64,4 +85,3 @@ const ComposeButton = () => {
 }
 
 export default ComposeButton
-

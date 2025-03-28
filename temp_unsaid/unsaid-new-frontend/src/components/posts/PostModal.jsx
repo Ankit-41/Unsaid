@@ -41,9 +41,96 @@ const modalStyles = `
   background: linear-gradient(135deg, #b71c1c, #ff3d00);
 }
 
-.chili-pattern {
-  // background-color: #1a1a1a;
-  // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
+.modal-container {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  padding: 1rem;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 450px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.spicy-level-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.spicy-level-button {
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.spicy-level-button.active {
+  background-color: rgba(255, 61, 0, 0.2);
+  transform: scale(1.1);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 20px;
+  background-color: #4b5563;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.toggle-switch.active {
+  background-color: #b71c1c;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(20px);
+}
+
+.textarea-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.textarea-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to top, rgba(31, 41, 55, 1), rgba(31, 41, 55, 0));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.textarea-container.scrolled::after {
+  opacity: 1;
+}
+
+.textarea-glow:focus {
+  box-shadow: 0 0 0 2px rgba(255, 61, 0, 0.3);
 }
 `
 
@@ -52,6 +139,7 @@ const PostModal = ({ show, handleClose }) => {
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [loading, setLoading] = useState(false)
   const [spicyLevel, setSpicyLevel] = useState(1) // 1-5 spicy level
+  const [isTextareaScrolled, setIsTextareaScrolled] = useState(false)
 
   const MAX_CHARS = 500
   const remainingChars = MAX_CHARS - content.length
@@ -65,6 +153,10 @@ const PostModal = ({ show, handleClose }) => {
     window.addEventListener("keydown", handleEsc)
     return () => window.removeEventListener("keydown", handleEsc)
   }, [handleClose])
+
+  const handleTextareaScroll = (e) => {
+    setIsTextareaScrolled(e.target.scrollTop > 10)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -121,56 +213,53 @@ const PostModal = ({ show, handleClose }) => {
   return (
     <>
       <style>{modalStyles}</style>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
-        <div
-          className="w-11/12 max-w-md rounded-lg overflow-hidden shadow-2xl spicy-entrance chili-pattern"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div className="modal-container" onClick={handleClose}>
+        <div className="modal-content spicy-entrance" onClick={(e) => e.stopPropagation()}>
           <div className="bg-gray-900 border-b border-red-800">
             <div className="flex justify-between items-center p-4">
-              <h2 className="text-xl font-bold text-white flex items-center">
+              <h2 className="text-lg font-bold text-white flex items-center">
                 <FaFire className="mr-2 text-red-500 flame-flicker" />
                 <span>Spill the Hot Tea</span>
               </h2>
               <button
                 onClick={handleClose}
                 aria-label="Close"
-                className="text-gray-400 hover:text-red-500 transition-colors duration-200 rounded-full p-1 hover:bg-gray-800"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-800 transition-colors"
               >
-                <FaTimes size={20} />
+                <FaTimes size={16} />
               </button>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="bg-gray-900 text-white">
             <div className="p-4">
-              <textarea
-                className={`w-full p-3 bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 text-white placeholder-gray-500 ${
-                  isOverLimit ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-red-500"
-                }`}
-                placeholder="What's the juicy gossip? Don't hold back..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows="5"
-                required
-              />
+              <div className={`textarea-container ${isTextareaScrolled ? "scrolled" : ""}`}>
+                <textarea
+                  className={`w-full p-3 bg-gray-800 border rounded-lg focus:outline-none text-white placeholder-gray-500 text-base textarea-glow ${isOverLimit ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-red-500"
+                    }`}
+                  placeholder="What's the juicy gossip? Don't hold back..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onScroll={handleTextareaScroll}
+                  rows="4"
+                  required
+                />
+              </div>
 
               <div className="mt-4">
-                <label className="text-gray-300 font-medium mb-2 block">How spicy is this tea?</label>
-                <div className="flex space-x-2 mb-3">
+                <label className="text-sm font-medium text-gray-300 mb-2 block">How spicy is this tea?</label>
+                <div className="spicy-level-container mb-3">
                   {[1, 2, 3, 4, 5].map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setSpicyLevel(level)}
-                      className={`p-2 rounded-full transition-all duration-200 ${
-                        spicyLevel >= level ? "text-red-500 transform scale-110" : "text-gray-500 hover:text-gray-300"
-                      }`}
+                      className={`spicy-level-button ${spicyLevel >= level ? "active" : ""}`}
                       title={`Spicy level ${level}`}
                     >
                       <FaPepperHot
-                        size={level === spicyLevel ? 22 : 18}
-                        className={spicyLevel === level ? "pulse-hot" : ""}
+                        size={level === spicyLevel ? 20 : 16}
+                        className={`${spicyLevel >= level ? "text-red-500" : "text-gray-500"} ${spicyLevel === level ? "pulse-hot" : ""}`}
                       />
                     </button>
                   ))}
@@ -178,37 +267,40 @@ const PostModal = ({ show, handleClose }) => {
               </div>
 
               <div className="flex justify-between items-center mt-3">
-                <label className="flex items-center space-x-2 text-gray-300 cursor-pointer group">
-                  <div className="relative w-10 h-5 bg-gray-700 rounded-full transition-colors duration-200 ease-in-out">
-                    <input
-                      type="checkbox"
-                      checked={isAnonymous}
-                      onChange={(e) => setIsAnonymous(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`absolute left-0.5 top-0.5 bg-gray-400 w-4 h-4 rounded-full transition-transform duration-200 ease-in-out transform ${
-                        isAnonymous ? "translate-x-5 bg-red-500" : ""
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm text-gray-300">Post as:</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAnonymous(false)}
+                    className={`!rounded-full px-3 py-1 text-xs transition-all ${!isAnonymous
+                        ? "bg-gradient-to-r from-red-800 to-red-700 text-white shadow-sm"
+                        : "bg-gray-800 text-gray-400 hover:text-gray-300"
                       }`}
-                    ></div>
-                  </div>
-                  <span className="flex items-center">
-                    {isAnonymous ? (
-                      <>
-                        <FaEyeSlash className="mr-1 text-red-500" /> Anonymous
-                      </>
-                    ) : (
-                      <>
-                        <FaEye className="mr-1" /> Show my name
-                      </>
-                    )}
-                  </span>
-                </label>
+                  >
+                    <div className="flex items-center">
+                      <FaEye className="mr-1" size={12} />
+                      <span>Me</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAnonymous(true)}
+                    className={`!rounded-full px-3 py-1 text-xs transition-all ${isAnonymous
+                        ? "bg-gradient-to-r from-red-800 to-red-700 text-white shadow-sm"
+                        : "bg-gray-800 text-gray-400 hover:text-gray-300"
+                      }`}
+                  >
+                    <div className="flex items-center">
+                      <FaEyeSlash className="mr-1" size={12} />
+                      <span>Anonymous</span>
+                    </div>
+                  </button>
+                </div>
+
 
                 <small
-                  className={`font-medium ${
-                    remainingChars <= 20 ? (remainingChars <= 0 ? "text-red-500" : "text-yellow-500") : "text-gray-400"
-                  }`}
+                  className={`text-xs font-medium ${remainingChars <= 20 ? (remainingChars <= 0 ? "text-red-500" : "text-yellow-500") : "text-gray-400"
+                    }`}
                 >
                   {remainingChars} chars left
                 </small>
@@ -218,11 +310,10 @@ const PostModal = ({ show, handleClose }) => {
             <div className="p-4 border-t border-gray-800 bg-gray-900">
               <button
                 type="submit"
-                className={`w-full py-3 rounded-lg font-bold text-white transition-all duration-300 relative overflow-hidden ${
-                  loading || !content.trim() || isOverLimit
+                className={`w-full py-3 rounded-lg font-bold text-white transition-all duration-300 relative overflow-hidden ${loading || !content.trim() || isOverLimit
                     ? "bg-gray-700 cursor-not-allowed opacity-70"
-                    : "spicy-gradient hover:shadow-lg hover:shadow-red-900/50"
-                }`}
+                    : "spicy-gradient hover:opacity-90"
+                  }`}
                 disabled={loading || !content.trim() || isOverLimit}
               >
                 <span className="relative z-10 flex items-center justify-center">
@@ -260,7 +351,7 @@ const PostModal = ({ show, handleClose }) => {
 
               <div className="mt-3 text-xs text-gray-500 flex items-center justify-center space-x-2">
                 <FaFire className="text-red-500" />
-                <span>Your gossip will be reviewed before it's served hot to everyone</span>
+                <span>Your gossip will be reviewed before it's served hot</span>
               </div>
             </div>
           </form>

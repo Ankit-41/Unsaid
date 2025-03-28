@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { FaChartBar, FaUsers, FaPepperHot, FaFire } from "react-icons/fa"
+import Footer from "../components/layout/Footer"
 
-import Dashboard from "../components/admin/Dashboard"
 import AdminUsers from "../components/admin/AdminUsers"
 import AdminPosts from "../components/admin/AdminPosts"
 
@@ -23,7 +23,7 @@ const adminPageStyles = `
 }
 
 .spicy-bg {
-  // background-color: #1a1a1a;
+  background-color: #1a1a1a;
   // background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 10c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zM15 40c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5zm30 0c5 0 5 0 5 5s0 5-5 5-5 0-5-5 0-5 5-5z' fill='%23ff3d00' fillOpacity='0.05' fillRule='evenodd'/%3E%3C/svg%3E");
 }
 
@@ -39,13 +39,13 @@ const adminPageStyles = `
 `
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const [activeTab, setActiveTab] = useState("users")
 
   return (
     <>
       <style>{adminPageStyles}</style>
-      <div className="min-h-screen spicy-bg p-4">
-        <header className="mb-6 text-center">
+      <div className="min-h-screen spicy-bg p-2 flex flex-col">
+        <header className="mb-6 mt-3  text-center">
           <div className="inline-flex items-center justify-center mb-2">
             <FaFire className="text-red-500 text-4xl mr-3 heat-pulse" />
             <h1 className="text-3xl  font-bold text-white bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">
@@ -91,15 +91,15 @@ const AdminPage = () => {
           </button>
         </nav>
 
-        <div className="fade-slide-in">
-          {activeTab === "dashboard" && <Dashboard />}
+        <div className="fade-slide-in flex-grow">
+          {/* {activeTab === "dashboard" && <Dashboard />} */}
           {activeTab === "users" && <AdminUsers />}
           {activeTab === "posts" && <AdminPosts />}
         </div>
+        <Footer />
       </div>
     </>
   )
 }
 
 export default AdminPage
-
